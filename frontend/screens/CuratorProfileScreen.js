@@ -21,6 +21,7 @@ const CuratorProfileScreen = ({ route, navigation }) => {
   const [curator, setCurator] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   const [broadcastHistory, setBroadcastHistory] = useState([]);
   const [curatorStatus, setCuratorStatus] = useState(null);
   const [totalBroadcastHours, setTotalBroadcastHours] = useState(0);
@@ -46,6 +47,7 @@ const CuratorProfileScreen = ({ route, navigation }) => {
 
       setCurator(fetchedCurator || null);
       setFollowerCount(stats?.followerCount ?? 0);
+      setFollowingCount(stats?.followingCount ?? 0);
       setTotalBroadcastHours(stats?.totalBroadcastHours ?? 0);
       setIsFollowing(followingStatus);
       setBroadcastHistory(history);
@@ -263,6 +265,10 @@ const CuratorProfileScreen = ({ route, navigation }) => {
           <View style={styles.stat}>
             <Text style={styles.statNumber}>{followerCount}</Text>
             <Text style={styles.statLabel}>Followers</Text>
+          </View>
+          <View style={styles.stat}>
+            <Text style={styles.statNumber}>{followingCount}</Text>
+            <Text style={styles.statLabel}>Following</Text>
           </View>
           <View style={styles.stat}>
             <Text style={styles.statNumber}>{broadcastHistory.length}</Text>
