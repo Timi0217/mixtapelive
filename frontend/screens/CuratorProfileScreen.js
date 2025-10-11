@@ -196,8 +196,8 @@ const CuratorProfileScreen = ({ route, navigation }) => {
         colors={
           curator?.profileBackgroundColor
             ? [
-                lightenColor(curator.profileBackgroundColor, 10),
-                darkenColor(curator.profileBackgroundColor, 20),
+                darkenColor(curator.profileBackgroundColor, 30),
+                darkenColor(curator.profileBackgroundColor, 60),
               ]
             : ['#1a1a1a', '#000000']
         }
