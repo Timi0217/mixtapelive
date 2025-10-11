@@ -12,6 +12,10 @@ import BroadcastScreen from '../screens/BroadcastScreen';
 import CuratorProfileScreen from '../screens/CuratorProfileScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import NotificationsSettingsScreen from '../screens/NotificationsSettingsScreen';
+import PrivacySettingsScreen from '../screens/PrivacySettingsScreen';
+import AboutScreen from '../screens/AboutScreen';
+import HelpSupportScreen from '../screens/HelpSupportScreen';
 import PhoneLoginScreen from '../screens/PhoneLoginScreen';
 import LoginScreen from '../screens/LoginScreen';
 import UsernameOnboardingScreen from '../screens/UsernameOnboardingScreen';
@@ -84,6 +88,14 @@ const AppNavigatorNew = () => {
         return <ProfileScreen navigation={navigation} />;
       case 'EditProfile':
         return <EditProfileScreen navigation={navigation} />;
+      case 'NotificationsSettings':
+        return <NotificationsSettingsScreen navigation={navigation} />;
+      case 'PrivacySettings':
+        return <PrivacySettingsScreen navigation={navigation} />;
+      case 'About':
+        return <AboutScreen navigation={navigation} />;
+      case 'HelpSupport':
+        return <HelpSupportScreen navigation={navigation} />;
       case 'Broadcast':
         return <BroadcastScreen route={{ params: screenParams }} navigation={navigation} />;
       case 'CuratorProfile':
@@ -101,7 +113,7 @@ const AppNavigatorNew = () => {
       <View style={styles.content}>{renderScreen()}</View>
 
       {/* Bottom Tab Bar - Apple-esque design */}
-      {!['Broadcast', 'CuratorProfile', 'MusicConnection'].includes(currentScreen) && (
+      {!['Broadcast', 'CuratorProfile', 'MusicConnection', 'EditProfile', 'NotificationsSettings', 'PrivacySettings', 'About', 'HelpSupport'].includes(currentScreen) && (
         <View style={[styles.tabBarContainer, { borderTopColor: theme.colors.tabBarBorder }]}>
           <View style={[styles.tabBar, { backgroundColor: theme.colors.tabBarBg }]}>
             <TouchableOpacity

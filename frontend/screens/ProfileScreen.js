@@ -464,7 +464,11 @@ const ProfileScreen = ({ navigation }) => {
             <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: theme.colors.separator }]} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={[styles.menuItem, { borderBottomColor: theme.colors.separator }]}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('NotificationsSettings')}
+          >
             <Ionicons
               name="notifications-outline"
               size={24}
@@ -477,7 +481,11 @@ const ProfileScreen = ({ navigation }) => {
             <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.menuItem, { borderBottomWidth: 0 }]} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={[styles.menuItem, { borderBottomWidth: 0 }]}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('PrivacySettings')}
+          >
             <Ionicons
               name="shield-outline"
               size={24}
@@ -491,7 +499,11 @@ const ProfileScreen = ({ navigation }) => {
 
         {/* About */}
         <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: theme.colors.separator }]} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={[styles.menuItem, { borderBottomColor: theme.colors.separator }]}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('About')}
+          >
             <Ionicons
               name="information-circle-outline"
               size={24}
@@ -502,7 +514,11 @@ const ProfileScreen = ({ navigation }) => {
             <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.menuItem, { borderBottomWidth: 0 }]} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={[styles.menuItem, { borderBottomWidth: 0 }]}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('HelpSupport')}
+          >
             <Ionicons
               name="help-circle-outline"
               size={24}

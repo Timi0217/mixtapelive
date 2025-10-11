@@ -11,6 +11,8 @@ export interface UpdateUserData {
   timezone?: string;
   profileEmoji?: string;
   profileBackgroundColor?: string;
+  bio?: string;
+  genreTags?: string[];
 }
 
 export class UserService {
