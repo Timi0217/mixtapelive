@@ -191,47 +191,68 @@ const CuratorProfileScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header with Back Button and Gradient */}
-      <LinearGradient
-        colors={
-          curator?.profileBackgroundColor
-            ? [
-                darkenColor(curator.profileBackgroundColor, 30),
-                darkenColor(curator.profileBackgroundColor, 60),
-              ]
-            : ['#1a1a1a', '#000000']
-        }
-        style={styles.gradientHeader}
-      >
-        {/* Back Button */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
+      {/* Header with Subtle Gradient */}
+      <View style={styles.headerContainer}>
+        <LinearGradient
+          colors={['#000000', '#0a0a0a']}
+          style={styles.gradientHeader}
         >
-          <View style={styles.backButtonCircle}>
-            <Text style={styles.backIcon}>‹</Text>
-          </View>
-        </TouchableOpacity>
+          {/* Colored accent blur at top */}
+          {curator?.profileBackgroundColor && (
+            <View
+              style={[
+                styles.colorAccentBlur,
+                { backgroundColor: curator.profileBackgroundColor },
+              ]}
+            />
+          )}
 
-        {/* Profile Info */}
-        <View style={styles.profileSection}>
-          {renderAvatar()}
+          {/* Back Button */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <View style={styles.backButtonCircle}>
+              <Text style={styles.backIcon}>‹</Text>
+            </View>
+          </TouchableOpacity>
 
-          <Text style={styles.displayName}>
-            {curator?.displayName || 'Curator'}
-          </Text>
-          <Text style={styles.username}>
-            @{curator?.username || curatorId.substring(0, 8)}
-          </Text>
+          {/* Profile Info */}
+          <View style={styles.profileSection}>
+            {renderAvatar()}
 
-        {curator?.bio && <Text style={styles.bio}>{curator.bio}</Text>}
+            <Text style={styles.displayName}>
+              {curator?.displayName || 'Curator'}
+            </Text>
+            <Text style={styles.username}>
+              @{curator?.username || curatorId.substring(0, 8)}
+            </Text>
+
+            {curator?.bio && <Text style={styles.bio}>{curator.bio}</Text>}
 
         {/* Genre Tags */}
         {curator?.genreTags && curator.genreTags.length > 0 && (
           <View style={styles.genreTags}>
             {curator.genreTags.map((genre, index) => (
-              <View key={index} style={styles.genreTag}>
-                <Text style={styles.genreText}>{genre}</Text>
+              <View
+                key={index}
+                style={[
+                  styles.genreTag,
+                  curator?.profileBackgroundColor && {
+                    borderColor: curator.profileBackgroundColor,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.genreText,
+                    curator?.profileBackgroundColor && {
+                      color: curator.profileBackgroundColor,
+                    },
+                  ]}
+                >
+                  {genre}
+                </Text>
               </View>
             ))}
           </View>
@@ -303,8 +324,9 @@ const CuratorProfileScreen = ({ route, navigation }) => {
             </TouchableOpacity>
           )}
         </View>
+        </View>
+        </LinearGradient>
       </View>
-      </LinearGradient>
 
       {/* Broadcast History */}
       <ScrollView style={styles.scrollContent}>
@@ -353,8 +375,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
+  headerContainer: {
+    position: 'relative',
+  },
   gradientHeader: {
     paddingBottom: 32,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  colorAccentBlur: {
+    position: 'absolute',
+    top: -100,
+    left: -50,
+    right: -50,
+    height: 300,
+    opacity: 0.15,
+    borderRadius: 200,
   },
   backButton: {
     position: 'absolute',
@@ -436,15 +472,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   genreTag: {
-    backgroundColor: '#333',
+    backgroundColor: 'transparent',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
     margin: 4,
+    borderWidth: 1,
+    borderColor: '#333',
   },
   genreText: {
-    color: '#1DB954',
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '600',
   },
   stats: {
     flexDirection: 'row',
