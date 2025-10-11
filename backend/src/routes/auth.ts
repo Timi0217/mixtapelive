@@ -46,35 +46,8 @@ router.post('/register',
   }
 );
 
-router.post('/login',
-  [
-    body('email').isEmail().normalizeEmail(),
-  ],
-  validateRequest,
-  async (req, res) => {
-    try {
-      const { email } = req.body;
-
-      const user = await UserService.getUserByEmail(email);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-
-      const tokens = generateTokens({
-        userId: user.id,
-        email: user.email,
-      });
-
-      res.json({
-        user,
-        tokens,
-      });
-    } catch (error) {
-      console.error('Login error:', error);
-      res.status(500).json({ error: 'Login failed' });
-    }
-  }
-);
+// Passwordless email login disabled for security - use phone auth or OAuth instead
+// router.post('/login', ...) - REMOVED
 
 router.post('/refresh',
   [

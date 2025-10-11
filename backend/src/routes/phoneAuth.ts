@@ -3,6 +3,8 @@ import { prisma } from '../config/database';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
 import twilio from 'twilio';
+import { phoneCodeLimiter, phoneLoginLimiter } from '../index';
+import { CacheService } from '../config/redis';
 
 const router = express.Router();
 
@@ -13,7 +15,8 @@ if (config.twilio.accountSid && config.twilio.authToken) {
   console.log('✅ Twilio client initialized');
 }
 
-// In-memory store for verification codes (in production, use Redis)
+// Verification code storage moved to Redis for production scalability
+// In-memory fallback for development if Redis is unavailable
 const verificationCodes = new Map<string, { code: string, expiresAt: Date }>();
 
 // Generate a random 6-digit code
@@ -21,8 +24,52 @@ function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Send verification code
-router.post('/send-code', async (req, res) => {
+// Store verification code in Redis with 10 minute TTL
+async function storeVerificationCode(phoneNumber: string, code: string): Promise<void> {
+  try {
+    const key = `verification:${phoneNumber}`;
+    await CacheService.set(key, code, 600); // 10 minutes
+    console.log(`✅ Stored verification code in Redis for ${phoneNumber}`);
+  } catch (error) {
+    console.error('Redis error, using in-memory fallback:', error);
+    // Fallback to in-memory storage
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    verificationCodes.set(phoneNumber, { code, expiresAt });
+  }
+}
+
+// Retrieve verification code from Redis
+async function getVerificationCode(phoneNumber: string): Promise<string | null> {
+  try {
+    const key = `verification:${phoneNumber}`;
+    const code = await CacheService.get(key);
+    return code;
+  } catch (error) {
+    console.error('Redis error, checking in-memory fallback:', error);
+    // Fallback to in-memory storage
+    const entry = verificationCodes.get(phoneNumber);
+    if (entry && entry.expiresAt > new Date()) {
+      return entry.code;
+    }
+    return null;
+  }
+}
+
+// Delete verification code after successful verification
+async function deleteVerificationCode(phoneNumber: string): Promise<void> {
+  try {
+    const key = `verification:${phoneNumber}`;
+    await CacheService.del(key);
+    console.log(`✅ Deleted verification code from Redis for ${phoneNumber}`);
+  } catch (error) {
+    console.error('Redis error:', error);
+    // Also clean up in-memory
+    verificationCodes.delete(phoneNumber);
+  }
+}
+
+// Send verification code (rate limited: 3 per hour)
+router.post('/send-code', phoneCodeLimiter, async (req, res) => {
   try {
     const { phoneNumber } = req.body;
 
@@ -50,23 +97,18 @@ router.post('/send-code', async (req, res) => {
         console.log(`✅ Twilio Verify SMS sent to ${phoneNumber}`);
 
         // Mark that we're using Twilio Verify for this number
-        verificationCodes.set(phoneNumber, {
-          code: 'TWILIO_VERIFY',
-          expiresAt: new Date(Date.now() + 10 * 60 * 1000)
-        });
+        await storeVerificationCode(phoneNumber, 'TWILIO_VERIFY');
       } catch (twilioError: any) {
         console.error('Twilio Verify error:', twilioError.message);
         // Fallback: generate our own code
         fallbackCode = generateCode();
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-        verificationCodes.set(phoneNumber, { code: fallbackCode, expiresAt });
+        await storeVerificationCode(phoneNumber, fallbackCode);
         console.log(`📱 Using manual code verification for ${phoneNumber}: ${fallbackCode}`);
       }
     } else {
       console.log('⚠️ Twilio not configured, using manual verification');
       fallbackCode = generateCode();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-      verificationCodes.set(phoneNumber, { code: fallbackCode, expiresAt });
+      await storeVerificationCode(phoneNumber, fallbackCode);
       console.log(`📱 Verification code for ${phoneNumber}: ${fallbackCode}`);
     }
 
@@ -83,7 +125,8 @@ router.post('/send-code', async (req, res) => {
 });
 
 // Verify code
-router.post('/verify-code', async (req, res) => {
+// Verify code and login (rate limited: 5 attempts per 15 minutes)
+router.post('/verify-code', phoneLoginLimiter, async (req, res) => {
   try {
     const { phoneNumber, code } = req.body;
 
@@ -94,26 +137,18 @@ router.post('/verify-code', async (req, res) => {
       });
     }
 
-    // Check verification code
-    const storedData = verificationCodes.get(phoneNumber);
+    // Check verification code from Redis
+    const storedCode = await getVerificationCode(phoneNumber);
 
-    if (!storedData) {
+    if (!storedCode) {
       return res.status(400).json({
         success: false,
-        error: 'No verification code found for this number'
-      });
-    }
-
-    if (storedData.expiresAt < new Date()) {
-      verificationCodes.delete(phoneNumber);
-      return res.status(400).json({
-        success: false,
-        error: 'Verification code expired'
+        error: 'No verification code found or code expired'
       });
     }
 
     // If using Twilio Verify, verify with Twilio
-    if (storedData.code === 'TWILIO_VERIFY') {
+    if (storedCode === 'TWILIO_VERIFY') {
       if (twilioClient && config.twilio.verifySid) {
         try {
           const verificationCheck = await twilioClient.verify.v2
@@ -140,7 +175,7 @@ router.post('/verify-code', async (req, res) => {
       }
     } else {
       // Using manual verification
-      if (storedData.code !== code) {
+      if (storedCode !== code) {
         return res.status(400).json({
           success: false,
           error: 'Invalid verification code'
@@ -166,8 +201,8 @@ router.post('/verify-code', async (req, res) => {
           { expiresIn: '7d' }
         );
 
-        // Clean up verification code
-        verificationCodes.delete(phoneNumber);
+        // Clean up verification code from Redis
+        await deleteVerificationCode(phoneNumber);
 
         return res.json({
           success: true,
@@ -219,10 +254,10 @@ router.post('/complete-signup', async (req, res) => {
       });
     }
 
-    // Verify code again
-    const storedData = verificationCodes.get(phoneNumber);
+    // Verify code again from Redis
+    const storedCode = await getVerificationCode(phoneNumber);
 
-    if (!storedData || storedData.code !== code || storedData.expiresAt < new Date()) {
+    if (!storedCode || storedCode !== code) {
       return res.status(400).json({
         success: false,
         error: 'Invalid or expired verification code'
@@ -270,8 +305,8 @@ router.post('/complete-signup', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    // Clean up verification code
-    verificationCodes.delete(phoneNumber);
+    // Clean up verification code from Redis
+    await deleteVerificationCode(phoneNumber);
 
     res.json({
       success: true,

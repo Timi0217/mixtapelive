@@ -176,18 +176,18 @@ export class BroadcastService {
       take: limit,
     });
 
-    return Promise.all(
-      broadcasts.map(async (broadcast) => {
-        const currentTrack = await CacheService.getCurrentlyPlaying(broadcast.curatorId);
-        const { _count, ...rest } = broadcast;
+    // Batch fetch currently playing tracks to avoid N+1 query problem
+    const curatorIds = broadcasts.map(b => b.curatorId);
+    const tracksMap = await CacheService.getBatchCurrentlyPlaying(curatorIds);
 
-        return {
-          ...rest,
-          listenerCount: _count.listeners,
-          currentTrack: currentTrack || null,
-        };
-      })
-    );
+    return broadcasts.map((broadcast) => {
+      const { _count, ...rest } = broadcast;
+      return {
+        ...rest,
+        listenerCount: _count.listeners,
+        currentTrack: tracksMap.get(broadcast.curatorId) || null,
+      };
+    });
   }
 
   // Get broadcast by ID with details

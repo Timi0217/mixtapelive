@@ -1,8 +1,34 @@
 import express from 'express';
 import { prisma } from '../config/database';
 import { FollowService } from '../services/followService';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
+
+// Admin authentication middleware
+const requireAdmin = async (req: AuthRequest, res: express.Response, next: express.NextFunction) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { accountType: true },
+    });
+
+    // For now, only 'admin' accountType can access admin routes
+    // TODO: Add dedicated admin role/permission system
+    if (user?.accountType !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Admin auth error:', error);
+    res.status(500).json({ error: 'Authentication failed' });
+  }
+};
 
 // Profile emojis for variety
 const EMOJIS = ['🎵', '🎧', '🎤', '🎸', '🎹', '🎺', '🎷', '🥁', '🎼', '🎶', '💿', '📻', '🔊', '🎚️', '🎛️', '🔥', '⚡', '✨', '💫', '⭐', '🌟', '💎', '👑', '🦁', '🐆', '🦅', '🌊', '🌴', '🏝️', '🌺'];
@@ -20,7 +46,7 @@ function getRandomElement<T>(array: T[]): T {
 }
 
 // Endpoint to add profile fields to existing users
-router.post('/migrate-profile-fields', async (req, res) => {
+router.post('/migrate-profile-fields', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
     console.log('🔧 Finding users without profile emoji/color...');
 
@@ -83,7 +109,7 @@ router.post('/migrate-profile-fields', async (req, res) => {
 });
 
 // Test endpoint to check if followService returns emoji/color fields
-router.get('/test-follow-service', async (req, res) => {
+router.get('/test-follow-service', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const testUser = await prisma.user.findFirst({
       where: { phone: { startsWith: '+1555' } },
@@ -110,7 +136,7 @@ router.get('/test-follow-service', async (req, res) => {
 });
 
 // Create live broadcasts for testing
-router.post('/create-live-broadcasts', async (req, res) => {
+router.post('/create-live-broadcasts', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const count = parseInt(req.body.count as string) || 5;
 
@@ -179,7 +205,7 @@ router.post('/create-live-broadcasts', async (req, res) => {
 });
 
 // Check current live broadcasts
-router.get('/check-live-broadcasts', async (req, res) => {
+router.get('/check-live-broadcasts', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const liveBroadcasts = await prisma.broadcast.findMany({
       where: {
@@ -220,7 +246,7 @@ router.get('/check-live-broadcasts', async (req, res) => {
 });
 
 // Create unfollowed curators with live broadcasts for Discovery testing
-router.post('/create-unfollowed-live-curators', async (req, res) => {
+router.post('/create-unfollowed-live-curators', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const count = parseInt(req.body.count as string) || 5;
 

@@ -54,6 +54,36 @@ export class CacheService {
     return data ? JSON.parse(data) : null;
   }
 
+  // Batch get currently playing tracks for multiple curators (solves N+1 query problem)
+  static async getBatchCurrentlyPlaying(curatorIds: string[]): Promise<Map<string, any>> {
+    if (curatorIds.length === 0) {
+      return new Map();
+    }
+
+    const keys = curatorIds.map(id => `curator:${id}:now-playing`);
+    const pipeline = redis.pipeline();
+
+    keys.forEach(key => {
+      pipeline.get(key);
+    });
+
+    const results = await pipeline.exec();
+    const trackMap = new Map<string, any>();
+
+    results?.forEach((result, index) => {
+      const [error, data] = result;
+      if (!error && data) {
+        try {
+          trackMap.set(curatorIds[index], JSON.parse(data as string));
+        } catch (e) {
+          console.error(`Failed to parse track data for ${curatorIds[index]}:`, e);
+        }
+      }
+    });
+
+    return trackMap;
+  }
+
   // Store active broadcast state
   static async setActiveBroadcast(curatorId: string, broadcastId: string): Promise<void> {
     const key = `curator:${curatorId}:active-broadcast`;

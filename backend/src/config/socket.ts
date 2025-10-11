@@ -19,8 +19,11 @@ export class WebSocketServer {
   constructor(httpServer: HTTPServer) {
     this.io = new SocketServer(httpServer, {
       cors: {
-        origin: '*', // Configure this properly in production
+        origin: config.nodeEnv === 'production'
+          ? config.frontendUrl
+          : ['http://localhost:19006', 'http://localhost:19000', 'exp://localhost:19000'],
         methods: ['GET', 'POST'],
+        credentials: true,
       },
     });
 
