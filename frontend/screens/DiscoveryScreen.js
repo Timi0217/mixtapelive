@@ -29,6 +29,12 @@ const GENRES = [
   { id: 'azonto', label: 'Azonto', tags: ['Azonto'] },
   { id: 'soca', label: 'Soca', tags: ['Soca'] },
   { id: 'gqom', label: 'GQOM', tags: ['GQOM', 'Gqom'] },
+  { id: 'rnb', label: 'R&B', tags: ['R&B', 'RnB', 'R & B'] },
+  { id: 'hiphop', label: 'Hip Hop', tags: ['Hip Hop', 'Hip-Hop', 'HipHop'] },
+  { id: 'house', label: 'House', tags: ['House'] },
+  { id: 'techno', label: 'Techno', tags: ['Techno'] },
+  { id: 'dancehall', label: 'Dancehall', tags: ['Dancehall'] },
+  { id: 'reggae', label: 'Reggae', tags: ['Reggae'] },
 ];
 
 const DiscoveryScreen = ({ navigation }) => {
