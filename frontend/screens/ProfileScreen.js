@@ -447,7 +447,11 @@ const ProfileScreen = ({ navigation }) => {
         <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
           <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>Settings</Text>
 
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: theme.colors.separator }]} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={[styles.menuItem, { borderBottomColor: theme.colors.separator }]}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
             <Ionicons
               name="person-outline"
               size={24}

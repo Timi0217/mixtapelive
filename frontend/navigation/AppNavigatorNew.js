@@ -11,6 +11,7 @@ import DiscoveryScreen from '../screens/DiscoveryScreen';
 import BroadcastScreen from '../screens/BroadcastScreen';
 import CuratorProfileScreen from '../screens/CuratorProfileScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 import PhoneLoginScreen from '../screens/PhoneLoginScreen';
 import LoginScreen from '../screens/LoginScreen';
 import UsernameOnboardingScreen from '../screens/UsernameOnboardingScreen';
@@ -81,6 +82,8 @@ const AppNavigatorNew = () => {
         return <DiscoveryScreen navigation={navigation} />;
       case 'Profile':
         return <ProfileScreen navigation={navigation} />;
+      case 'EditProfile':
+        return <EditProfileScreen navigation={navigation} />;
       case 'Broadcast':
         return <BroadcastScreen route={{ params: screenParams }} navigation={navigation} />;
       case 'CuratorProfile':

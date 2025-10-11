@@ -27,17 +27,22 @@ router.put('/profile',
     body('timezone').optional().isString(),
     body('profileEmoji').optional().isString(),
     body('profileBackgroundColor').optional().isString(),
+    body('bio').optional().trim().isLength({ max: 150 }),
+    body('genreTags').optional().isArray(),
+    body('genreTags.*').optional().isString(),
   ],
   validateRequest,
   async (req: AuthRequest, res) => {
     try {
-      const { displayName, timezone, profileEmoji, profileBackgroundColor } = req.body;
+      const { displayName, timezone, profileEmoji, profileBackgroundColor, bio, genreTags } = req.body;
 
       const user = await UserService.updateUser(req.user!.id, {
         displayName,
         timezone,
         profileEmoji,
         profileBackgroundColor,
+        bio,
+        genreTags,
       });
 
       res.json({ user });
