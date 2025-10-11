@@ -109,4 +109,73 @@ router.get('/test-follow-service', async (req, res) => {
   }
 });
 
+// Create live broadcasts for testing
+router.post('/create-live-broadcasts', async (req, res) => {
+  try {
+    const count = parseInt(req.body.count as string) || 5;
+
+    // Get nova's following
+    const nova = await prisma.user.findUnique({
+      where: { username: 'nova0217' },
+    });
+
+    if (!nova) {
+      return res.status(404).json({ error: 'Nova user not found' });
+    }
+
+    const following = await prisma.follow.findMany({
+      where: { followerUserId: nova.id },
+      select: { curatorUserId: true },
+      take: count,
+    });
+
+    if (following.length === 0) {
+      return res.json({ error: 'Nova is not following anyone' });
+    }
+
+    const captions = [
+      'Late night vibes',
+      'House music session',
+      'Afrobeats all day',
+      'Weekend warmup',
+      'Live from the studio',
+      'Catch these vibes',
+      'New music Friday',
+      'Party mode activated',
+      'Chill vibes only',
+      'Feel the energy',
+    ];
+
+    const now = new Date();
+    const broadcasts = [];
+
+    for (const follow of following) {
+      const broadcast = await prisma.broadcast.create({
+        data: {
+          curatorId: follow.curatorUserId,
+          caption: captions[Math.floor(Math.random() * captions.length)],
+          status: 'live',
+          peakListeners: Math.floor(Math.random() * 20) + 5,
+          startedAt: new Date(now.getTime() - Math.random() * 3600000),
+          lastHeartbeatAt: now,
+        },
+      });
+      broadcasts.push(broadcast);
+    }
+
+    res.json({
+      success: true,
+      message: `Created ${broadcasts.length} live broadcasts`,
+      broadcasts: broadcasts.map(b => ({
+        id: b.id,
+        curatorId: b.curatorId,
+        caption: b.caption,
+      })),
+    });
+  } catch (error: any) {
+    console.error('Error creating broadcasts:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
