@@ -219,4 +219,72 @@ router.get('/check-live-broadcasts', async (req, res) => {
   }
 });
 
+// Create unfollowed curators with live broadcasts for Discovery testing
+router.post('/create-unfollowed-live-curators', async (req, res) => {
+  try {
+    const count = parseInt(req.body.count as string) || 5;
+
+    const curators = [];
+    const broadcasts = [];
+
+    for (let i = 0; i < count; i++) {
+      // Create a new curator
+      const curator = await prisma.user.create({
+        data: {
+          phone: `+1555999${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+          username: `dj_${['vibe', 'wave', 'soul', 'beats', 'rhythm'][Math.floor(Math.random() * 5)]}_${Math.floor(Math.random() * 1000)}`,
+          displayName: ['DJ Pulse', 'DJ Nova', 'DJ Stellar', 'DJ Eclipse', 'DJ Cosmic', 'DJ Phoenix'][Math.floor(Math.random() * 6)],
+          accountType: 'curator',
+          profileEmoji: getRandomElement(EMOJIS),
+          profileBackgroundColor: getRandomElement(COLORS),
+          bio: 'Bringing the vibes 🎶',
+          genreTags: [getRandomElement(['Afrobeats', 'Amapiano', 'Afro House', 'GQOM', 'Azonto'])],
+        },
+      });
+
+      curators.push(curator);
+
+      // Create a live broadcast for them
+      const broadcast = await prisma.broadcast.create({
+        data: {
+          curatorId: curator.id,
+          caption: getRandomElement([
+            'Late night vibes',
+            'House music session',
+            'Afrobeats all day',
+            'Weekend warmup',
+            'Live from the studio',
+          ]),
+          status: 'live',
+          peakListeners: Math.floor(Math.random() * 50) + 10,
+          startedAt: new Date(Date.now() - Math.random() * 3600000),
+          lastHeartbeatAt: new Date(),
+        },
+      });
+
+      broadcasts.push(broadcast);
+    }
+
+    res.json({
+      success: true,
+      message: `Created ${curators.length} unfollowed curators with live broadcasts`,
+      curators: curators.map(c => ({
+        id: c.id,
+        username: c.username,
+        displayName: c.displayName,
+        profileEmoji: c.profileEmoji,
+        profileBackgroundColor: c.profileBackgroundColor,
+      })),
+      broadcasts: broadcasts.map(b => ({
+        id: b.id,
+        curatorId: b.curatorId,
+        caption: b.caption,
+      })),
+    });
+  } catch (error: any) {
+    console.error('Error creating unfollowed curators:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
