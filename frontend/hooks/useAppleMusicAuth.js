@@ -1,0 +1,167 @@
+import { useState, useEffect, useCallback } from 'react';
+import { Linking, Alert } from 'react-native';
+import nativeMusicKitService from '../services/nativeMusicKitService';
+import appleMusicAuthSession from '../services/appleMusicAuthSession';
+import webViewMusicKitService from '../services/webViewMusicKitService';
+import AppleMusicBrowserAuth from '../components/AppleMusicBrowserAuth';
+
+export const useAppleMusicAuth = () => {
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authResult, setAuthResult] = useState(null);
+  const [showWebView, setShowWebView] = useState(false);
+
+  // Handle deep link callbacks from MusicKit
+  useEffect(() => {
+    const handleDeepLink = (url) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔗 Received deep link:', url, typeof url);
+      }
+      
+      // Handle both string URLs and URL objects from Linking
+      const urlString = typeof url === 'string' ? url : url?.url || '';
+      
+      if (urlString.includes('apple-music-success')) {
+        handleMusicKitCallback(urlString);
+      }
+    };
+
+    // Set up deep link listener
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // Check if app was opened with a deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink(url);
+      }
+    });
+
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
+
+  const handleMusicKitCallback = async (url) => {
+    try {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🎵 Processing MusicKit callback:', url);
+      }
+      
+      // Extract music user token from URL
+      const urlObj = new URL(url);
+      const musicUserToken = urlObj.searchParams.get('token') || urlObj.searchParams.get('music_user_token');
+      
+      if (musicUserToken) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ Music User Token received');
+        }
+        
+        // Exchange token with backend  
+        const result = await webViewMusicKitService.exchangeTokenWithBackend(musicUserToken);
+        
+        setAuthResult({
+          success: true,
+          token: result.token,
+          user: result.user,
+          platform: result.platform
+        });
+      } else {
+        throw new Error('No Music User Token in callback URL');
+      }
+    } catch (error) {
+      console.error('MusicKit callback processing failed:', error);
+      setAuthResult({
+        success: false,
+        error: error.message
+      });
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const authenticateWithAppleMusic = useCallback(async () => {
+    setIsAuthenticating(true);
+    setAuthResult(null);
+
+    try {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🎵 Starting Apple Music authentication...');
+        console.log('🍎 Using browser + deep link approach...');
+      }
+      
+      // Show browser auth modal
+      setShowWebView(true);
+      
+      // Return in progress state - modal will handle the rest
+      return { inProgress: true };
+      
+    } catch (error) {
+      console.error('Apple Music authentication failed:', error);
+      setIsAuthenticating(false);
+      setAuthResult({
+        success: false,
+        error: error.message
+      });
+      return { error: error.message };
+    }
+  }, []);
+
+  const handleWebViewSuccess = useCallback((result) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ WebView authentication successful!', result);
+    }
+    
+    setShowWebView(false);
+    setIsAuthenticating(false);
+    setAuthResult({
+      success: true,
+      status: 'authorized',
+      cancelled: false,
+      token: result.token,
+      userToken: result.token,
+      userInfo: result.user,
+      platform: result.platform
+    });
+  }, []);
+
+  const handleWebViewError = useCallback((error) => {
+    console.error('WebView authentication failed:', error);
+    
+    setShowWebView(false);
+    setIsAuthenticating(false);
+    setAuthResult({
+      success: false,
+      error: error
+    });
+  }, []);
+
+  const handleWebViewCancel = useCallback(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('User cancelled WebView authentication');
+    }
+    
+    setShowWebView(false);
+    setIsAuthenticating(false);
+    setAuthResult({
+      success: false,
+      cancelled: true,
+      status: 'denied'
+    });
+  }, []);
+
+  const resetAuth = useCallback(() => {
+    setIsAuthenticating(false);
+    setAuthResult(null);
+    setShowWebView(false);
+  }, []);
+
+  return {
+    isAuthenticating,
+    authResult,
+    showWebView,
+    authenticateWithAppleMusic,
+    handleWebViewSuccess,
+    handleWebViewError,
+    handleWebViewCancel,
+    resetAuth
+  };
+};

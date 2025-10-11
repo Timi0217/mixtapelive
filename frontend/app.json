@@ -1,0 +1,87 @@
+{
+  "expo": {
+    "name": "Mixtape",
+    "slug": "mixtape",
+    "version": "1.0.0",
+    "scheme": [
+      "mixtape",
+      "com.mobilemixtape.app"
+    ],
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mobilemixtape.app",
+      "usesNonExemptEncryption": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSUserNotificationsUsageDescription": "This app uses notifications to remind you about daily song submissions and notify you when playlists are ready.",
+        "NSMicrophoneUsageDescription": "This app may need microphone access for music recognition features with Apple Music.",
+        "NSCameraUsageDescription": "This app may use camera access for profile pictures or group photos in future updates.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSExceptionDomains": {
+            "js-cdn.music.apple.com": {
+              "NSExceptionAllowsInsecureHTTPLoads": false,
+              "NSExceptionMinimumTLSVersion": "TLSv1.2",
+              "NSExceptionRequiresForwardSecrecy": true,
+              "NSIncludesSubdomains": true
+            },
+            "api.music.apple.com": {
+              "NSExceptionAllowsInsecureHTTPLoads": false,
+              "NSExceptionMinimumTLSVersion": "TLSv1.2",
+              "NSExceptionRequiresForwardSecrecy": true,
+              "NSIncludesSubdomains": true
+            },
+            "authorize.music.apple.com": {
+              "NSExceptionAllowsInsecureHTTPLoads": false,
+              "NSExceptionMinimumTLSVersion": "TLSv1.2",
+              "NSExceptionRequiresForwardSecrecy": true,
+              "NSIncludesSubdomains": true
+            }
+          }
+        }
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.mobilemixtape.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-web-browser",
+      "expo-apple-authentication",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#8B5CF6",
+          "defaultChannel": "default"
+        }
+      ]
+    ],
+    "extra": {
+      "API_BASE_URL": "https://carefree-love-production-2e42.up.railway.app/api",
+      "APP_ENV": "production",
+      "ENABLE_DEBUG_LOGS": false,
+      "DEEP_LINK_SCHEME": "mixtape",
+      "eas": {
+        "projectId": "6d07271b-0b89-456a-94a4-fbbdf46dbaa7"
+      }
+    },
+    "owner": "tmilehin"
+  }
+}

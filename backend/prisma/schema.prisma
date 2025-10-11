@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String                    @id @default(cuid())
+  phone                String?                   @unique
+  email                String?                   @unique
+  username             String                    @unique
+  displayName          String                    @map("display_name")
+  bio                  String?                   @db.VarChar(150)
+  profilePhotoUrl      String?                   @map("profile_photo_url")
+  profileEmoji         String?                   @map("profile_emoji")
+  profileBackgroundColor String?                 @map("profile_background_color")
+  accountType          String                    @default("listener") @map("account_type")
+  instagramHandle      String?                   @map("instagram_handle")
+  genreTags            String[]                  @default([]) @map("genre_tags")
+  timezone             String                    @default("UTC")
+  createdAt            DateTime                  @default(now()) @map("created_at")
+  updatedAt            DateTime                  @updatedAt @map("updated_at")
+  broadcastListeners   BroadcastListener[]
+  broadcasts           Broadcast[]
+  curatorBalance       CuratorBalance?
+  followedBy           Follow[]                  @relation("FollowedCurators")
+  following            Follow[]                  @relation("Followers")
+  messages             Message[]
+  pushTokens           PushNotificationToken[]
+  tipsSent             Transaction[]             @relation("TipsSent")
+  tipsReceived         Transaction[]             @relation("TipsReceived")
+  musicAccounts        UserMusicAccount[]
+  musicPreferences     UserMusicPreferences?
+  notificationSettings UserNotificationSettings?
+
+  @@map("users")
+}
+
+model UserMusicAccount {
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  platform     String
+  accessToken  String    @map("access_token")
+  refreshToken String?   @map("refresh_token")
+  expiresAt    DateTime? @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
+  @@map("user_music_accounts")
+}
+
+model UserNotificationSettings {
+  id       String @id @default(cuid())
+  userId   String @unique @map("user_id")
+  settings Json   @default("{}")
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_notification_settings")
+}
+
+model UserMusicPreferences {
+  id                    String  @id @default(cuid())
+  userId                String  @unique @map("user_id")
+  preferredPlatform     String  @default("spotify") @map("preferred_platform")
+  autoMatchSongs        Boolean @default(true) @map("auto_match_songs")
+  highQualityOnly       Boolean @default(false) @map("high_quality_only")
+  explicitContentFilter Boolean @default(false) @map("explicit_content_filter")
+  user                  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_music_preferences")
+}
+
+model OAuthSession {
+  id        String   @id @default(cuid())
+  sessionId String   @unique @map("session_id")
+  platform  String
+  state     String?
+  tokenData Json?    @map("token_data")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("oauth_sessions")
+}
+
+model Broadcast {
+  id              String              @id @default(cuid())
+  curatorId       String              @map("curator_id")
+  startedAt       DateTime            @default(now()) @map("started_at")
+  endedAt         DateTime?           @map("ended_at")
+  status          String              @default("live")
+  peakListeners   Int                 @default(0) @map("peak_listeners")
+  totalTipsCents  Int                 @default(0) @map("total_tips_cents")
+  totalMessages   Int                 @default(0) @map("total_messages")
+  lastHeartbeatAt DateTime            @default(now()) @map("last_heartbeat_at")
+  caption         String?             @db.VarChar(50)
+  listeners       BroadcastListener[]
+  curator         User                @relation(fields: [curatorId], references: [id], onDelete: Cascade)
+  messages        Message[]
+
+  @@index([curatorId, status])
+  @@index([status, startedAt])
+  @@map("broadcasts")
+}
+
+model BroadcastListener {
+  id          String    @id @default(cuid())
+  broadcastId String    @map("broadcast_id")
+  userId      String    @map("user_id")
+  joinedAt    DateTime  @default(now()) @map("joined_at")
+  leftAt      DateTime? @map("left_at")
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([broadcastId, leftAt])
+  @@index([userId])
+  @@map("broadcast_listeners")
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  broadcastId String    @map("broadcast_id")
+  userId      String    @map("user_id")
+  messageType String    @map("message_type")
+  content     String    @db.VarChar(100)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([broadcastId, createdAt])
+  @@map("messages")
+}
+
+model Follow {
+  followerUserId String   @map("follower_user_id")
+  curatorUserId  String   @map("curator_user_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  curator        User     @relation("FollowedCurators", fields: [curatorUserId], references: [id], onDelete: Cascade)
+  follower       User     @relation("Followers", fields: [followerUserId], references: [id], onDelete: Cascade)
+
+  @@id([followerUserId, curatorUserId])
+  @@index([curatorUserId])
+  @@map("follows")
+}
+
+model Transaction {
+  id                  String    @id @default(cuid())
+  fromUserId          String    @map("from_user_id")
+  toCuratorId         String    @map("to_curator_id")
+  broadcastId         String?   @map("broadcast_id")
+  amountCents         Int       @map("amount_cents")
+  platformFeeCents    Int       @map("platform_fee_cents")
+  netCents            Int       @map("net_cents")
+  stripePaymentIntent String    @unique @map("stripe_payment_intent")
+  status              String    @default("pending")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  completedAt         DateTime? @map("completed_at")
+  from                User      @relation("TipsSent", fields: [fromUserId], references: [id], onDelete: Cascade)
+  to                  User      @relation("TipsReceived", fields: [toCuratorId], references: [id], onDelete: Cascade)
+
+  @@index([toCuratorId, status])
+  @@index([fromUserId])
+  @@map("transactions")
+}
+
+model CuratorBalance {
+  curatorId             String    @id @unique @map("curator_id")
+  pendingBalanceCents   Int       @default(0) @map("pending_balance_cents")
+  lifetimeEarningsCents Int       @default(0) @map("lifetime_earnings_cents")
+  totalBroadcastHours   Int       @default(0) @map("total_broadcast_hours")
+  totalFollowers        Int       @default(0) @map("total_followers")
+  stripeConnectId       String?   @map("stripe_connect_id")
+  lastPayoutAt          DateTime? @map("last_payout_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  curator               User      @relation(fields: [curatorId], references: [id], onDelete: Cascade)
+
+  @@map("curator_balances")
+}
+
+model PushNotificationToken {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  token      String   @unique
+  platform   String
+  active     Boolean  @default(true)
+  deviceInfo Json?    @map("device_info")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_notification_tokens")
+}
