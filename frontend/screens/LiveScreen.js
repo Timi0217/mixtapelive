@@ -199,16 +199,6 @@ const LiveScreen = ({ navigation }) => {
         broadcastService.getLiveBroadcasts(),
       ]);
 
-      // Debug logging
-      if (followingData.length > 0) {
-        const first = followingData[0];
-        console.log('First following curator:', JSON.stringify(first, null, 2));
-        Alert.alert(
-          'Debug: First Curator Data',
-          `Username: ${first.username}\nEmoji: ${first.profileEmoji || 'MISSING'}\nColor: ${first.profileBackgroundColor || 'MISSING'}`
-        );
-      }
-
       setFollowing(followingData);
       setLiveBroadcasts(broadcastsData);
 
