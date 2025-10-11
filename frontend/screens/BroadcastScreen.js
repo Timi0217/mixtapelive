@@ -171,6 +171,7 @@ const BroadcastScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     loadBroadcast();
+    loadMessages();
     joinBroadcast();
 
     // Fade in animation
@@ -271,6 +272,18 @@ const BroadcastScreen = ({ route, navigation }) => {
       console.error('Error loading broadcast:', error);
       Alert.alert('Error', error.message);
       setLoading(false);
+    }
+  };
+
+  const loadMessages = async () => {
+    try {
+      const response = await api.get(`/chat/${broadcastId}/messages?limit=100`);
+      if (response.data && response.data.messages) {
+        setMessages(response.data.messages);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      // Don't show alert, just log - messages are optional
     }
   };
 

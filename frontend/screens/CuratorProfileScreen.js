@@ -142,7 +142,7 @@ const CuratorProfileScreen = ({ route, navigation }) => {
   };
 
   const renderAvatar = () => {
-    const size = 120;
+    const size = 100;
     const diameterStyle = { width: size, height: size, borderRadius: size / 2 };
     const emojiSize = Math.floor(size * 0.55);
 
@@ -429,9 +429,9 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     marginBottom: 16,
   },
   avatarEmojiBadge: {
