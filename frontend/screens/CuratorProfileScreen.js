@@ -190,7 +190,7 @@ const CuratorProfileScreen = ({ route, navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       {/* Header with Back Button and Gradient */}
       <LinearGradient
         colors={
@@ -203,14 +203,15 @@ const CuratorProfileScreen = ({ route, navigation }) => {
         }
         style={styles.gradientHeader}
       >
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Back Button */}
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <View style={styles.backButtonCircle}>
+            <Text style={styles.backIcon}>‹</Text>
+          </View>
+        </TouchableOpacity>
 
         {/* Profile Info */}
         <View style={styles.profileSection}>
@@ -306,31 +307,44 @@ const CuratorProfileScreen = ({ route, navigation }) => {
       </LinearGradient>
 
       {/* Broadcast History */}
-      <View style={styles.historySection}>
-        <Text style={styles.sectionTitle}>Recent Broadcasts</Text>
+      <ScrollView style={styles.scrollContent}>
+        <View style={styles.historySection}>
+          <Text style={styles.sectionTitle}>Recent Broadcasts</Text>
 
-        {broadcastHistory.length === 0 ? (
-          <View style={styles.emptyHistory}>
-            <Text style={styles.emptyText}>No broadcasts yet</Text>
-          </View>
-        ) : (
-          broadcastHistory.map(broadcast => (
-            <View key={broadcast.id} style={styles.historyCard}>
-              <View style={styles.historyInfo}>
+          {broadcastHistory.length === 0 ? (
+            <View style={styles.emptyHistory}>
+              <Text style={styles.emptyText}>No broadcasts yet</Text>
+            </View>
+          ) : (
+            broadcastHistory.map(broadcast => (
+              <View key={broadcast.id} style={styles.historyCard}>
                 <Text style={styles.historyDate}>
                   {formatDate(broadcast.startedAt)}
                 </Text>
-                <Text style={styles.historyStats}>
-                  👥 {broadcast.peakListeners} peak • ⏱{' '}
-                  {formatDuration(broadcast.startedAt, broadcast.endedAt)} • 💬{' '}
-                  {broadcast.totalMessages} messages
-                </Text>
+                <View style={styles.historyStats}>
+                  <View style={styles.historyStat}>
+                    <Text style={styles.historyStatValue}>{broadcast.peakListeners}</Text>
+                    <Text style={styles.historyStatLabel}>listeners</Text>
+                  </View>
+                  <View style={styles.historyStatDivider} />
+                  <View style={styles.historyStat}>
+                    <Text style={styles.historyStatValue}>
+                      {formatDuration(broadcast.startedAt, broadcast.endedAt)}
+                    </Text>
+                    <Text style={styles.historyStatLabel}>duration</Text>
+                  </View>
+                  <View style={styles.historyStatDivider} />
+                  <View style={styles.historyStat}>
+                    <Text style={styles.historyStatValue}>{broadcast.totalMessages || 0}</Text>
+                    <Text style={styles.historyStatLabel}>messages</Text>
+                  </View>
+                </View>
               </View>
-            </View>
-          ))
-        )}
-      </View>
-    </ScrollView>
+            ))
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -340,23 +354,37 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   gradientHeader: {
-    paddingBottom: 20,
-  },
-  header: {
-    paddingTop: 50,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 32,
   },
   backButton: {
-    alignSelf: 'flex-start',
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    zIndex: 10,
   },
-  backText: {
+  backButtonCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backdropFilter: 'blur(10px)',
+  },
+  backIcon: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 28,
+    fontWeight: '300',
+    marginLeft: -2,
+  },
+  scrollContent: {
+    flex: 1,
   },
   profileSection: {
     alignItems: 'center',
-    padding: 20,
+    paddingTop: 80,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   avatar: {
     width: 120,
@@ -482,31 +510,56 @@ const styles = StyleSheet.create({
   },
   historySection: {
     padding: 20,
+    paddingBottom: 40,
   },
   sectionTitle: {
     color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
     marginBottom: 16,
+    letterSpacing: -0.5,
   },
   historyCard: {
     backgroundColor: '#111',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 12,
-  },
-  historyInfo: {
-    flex: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   historyDate: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 6,
+    marginBottom: 16,
+    opacity: 0.9,
   },
   historyStats: {
-    color: '#999',
-    fontSize: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  historyStat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  historyStatValue: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  historyStatLabel: {
+    color: '#666',
+    fontSize: 11,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  historyStatDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   emptyHistory: {
     padding: 40,
