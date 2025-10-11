@@ -210,14 +210,16 @@ export class WebSocketServer {
       }
     }, 10000); // 10 seconds
 
-    // Also run cleanup every minute
-    setInterval(async () => {
-      try {
-        await BroadcastService.cleanupInactiveBroadcasts();
-      } catch (error) {
-        console.error('Error cleaning up inactive broadcasts:', error);
-      }
-    }, 60000); // 1 minute
+    // DISABLED: Auto-cleanup of inactive broadcasts
+    // Test broadcasts should stay live until manually stopped
+    // Re-enable when ready for production heartbeat monitoring
+    // setInterval(async () => {
+    //   try {
+    //     await BroadcastService.cleanupInactiveBroadcasts();
+    //   } catch (error) {
+    //     console.error('Error cleaning up inactive broadcasts:', error);
+    //   }
+    // }, 60000); // 1 minute
   }
 
   // Emit broadcast started event
