@@ -385,12 +385,11 @@ const styles = StyleSheet.create({
   },
   colorAccentBlur: {
     position: 'absolute',
-    top: -100,
-    left: -50,
-    right: -50,
-    height: 300,
-    opacity: 0.15,
-    borderRadius: 200,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.2,
   },
   backButton: {
     position: 'absolute',
