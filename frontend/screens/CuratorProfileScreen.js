@@ -303,7 +303,14 @@ const CuratorProfileScreen = ({ route, navigation }) => {
             <TouchableOpacity
               style={[
                 styles.button,
-                isFollowing ? styles.followingButton : styles.followButton,
+                isFollowing
+                  ? styles.followingButton
+                  : [
+                      styles.followButton,
+                      curator?.profileBackgroundColor && {
+                        backgroundColor: curator.profileBackgroundColor,
+                      },
+                    ],
               ]}
               onPress={handleFollow}
               disabled={user?.id === curatorId}
