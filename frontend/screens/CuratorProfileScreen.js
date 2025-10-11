@@ -9,6 +9,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import followService from '../services/followService';
 import broadcastService from '../services/broadcastService';
@@ -107,6 +108,79 @@ const CuratorProfileScreen = ({ route, navigation }) => {
     return date.toLocaleDateString();
   };
 
+  // Color manipulation helpers
+  const lightenColor = (color, percent) => {
+    const num = parseInt(color.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, (num >> 16) + amt);
+    const G = Math.min(255, ((num >> 8) & 0x00ff) + amt);
+    const B = Math.min(255, (num & 0x0000ff) + amt);
+    return `#${(
+      0x1000000 +
+      R * 0x10000 +
+      G * 0x100 +
+      B
+    )
+      .toString(16)
+      .slice(1)}`;
+  };
+
+  const darkenColor = (color, percent) => {
+    const num = parseInt(color.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.max(0, (num >> 16) - amt);
+    const G = Math.max(0, ((num >> 8) & 0x00ff) - amt);
+    const B = Math.max(0, (num & 0x0000ff) - amt);
+    return `#${(
+      0x1000000 +
+      R * 0x10000 +
+      G * 0x100 +
+      B
+    )
+      .toString(16)
+      .slice(1)}`;
+  };
+
+  const renderAvatar = () => {
+    const size = 120;
+    const diameterStyle = { width: size, height: size, borderRadius: size / 2 };
+    const emojiSize = Math.floor(size * 0.55);
+
+    if (curator?.profilePhotoUrl) {
+      return (
+        <Image
+          source={{ uri: curator.profilePhotoUrl }}
+          style={[styles.avatar, diameterStyle]}
+        />
+      );
+    }
+
+    if (curator?.profileEmoji && curator?.profileBackgroundColor) {
+      return (
+        <View
+          style={[
+            styles.avatarEmojiBadge,
+            diameterStyle,
+            { backgroundColor: curator.profileBackgroundColor },
+          ]}
+        >
+          <Text style={[styles.avatarEmojiText, { fontSize: emojiSize }]}>
+            {curator.profileEmoji}
+          </Text>
+        </View>
+      );
+    }
+
+    // Fallback to grey circle with letter
+    return (
+      <View style={[styles.avatarFallback, diameterStyle]}>
+        <Text style={[styles.avatarFallbackText, { fontSize: Math.floor(size * 0.4) }]}>
+          {(curator?.displayName?.charAt(0) || '?').toUpperCase()}
+        </Text>
+      </View>
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -117,33 +191,37 @@ const CuratorProfileScreen = ({ route, navigation }) => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header with Back Button */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Header with Back Button and Gradient */}
+      <LinearGradient
+        colors={
+          curator?.profileBackgroundColor
+            ? [
+                lightenColor(curator.profileBackgroundColor, 10),
+                darkenColor(curator.profileBackgroundColor, 20),
+              ]
+            : ['#1a1a1a', '#000000']
+        }
+        style={styles.gradientHeader}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backText}>← Back</Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Profile Info */}
-      <View style={styles.profileSection}>
-        <Image
-          source={
-            curator?.profilePhotoUrl
-              ? { uri: curator.profilePhotoUrl }
-              : require('../assets/icon.png')
-          }
-          style={styles.avatar}
-        />
+        {/* Profile Info */}
+        <View style={styles.profileSection}>
+          {renderAvatar()}
 
-        <Text style={styles.displayName}>
-          {curator?.displayName || 'Curator'}
-        </Text>
-        <Text style={styles.username}>
-          @{curator?.username || curatorId.substring(0, 8)}
-        </Text>
+          <Text style={styles.displayName}>
+            {curator?.displayName || 'Curator'}
+          </Text>
+          <Text style={styles.username}>
+            @{curator?.username || curatorId.substring(0, 8)}
+          </Text>
 
         {curator?.bio && <Text style={styles.bio}>{curator.bio}</Text>}
 
@@ -224,7 +302,7 @@ const CuratorProfileScreen = ({ route, navigation }) => {
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </LinearGradient>
 
       {/* Broadcast History */}
       <View style={styles.historySection}>
@@ -260,6 +338,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
+  gradientHeader: {
+    paddingBottom: 20,
+  },
   header: {
     paddingTop: 50,
     paddingHorizontal: 16,
@@ -281,6 +362,24 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     marginBottom: 16,
+  },
+  avatarEmojiBadge: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatarEmojiText: {
+    textAlign: 'center',
+  },
+  avatarFallback: {
+    backgroundColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatarFallbackText: {
+    color: '#999',
+    fontWeight: 'bold',
   },
   displayName: {
     color: '#fff',
