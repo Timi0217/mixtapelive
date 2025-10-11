@@ -302,6 +302,7 @@ const CuratorProfileScreen = ({ route, navigation }) => {
             </TouchableOpacity>
           )}
         </View>
+      </View>
       </LinearGradient>
 
       {/* Broadcast History */}

@@ -178,4 +178,45 @@ router.post('/create-live-broadcasts', async (req, res) => {
   }
 });
 
+// Check current live broadcasts
+router.get('/check-live-broadcasts', async (req, res) => {
+  try {
+    const liveBroadcasts = await prisma.broadcast.findMany({
+      where: {
+        status: 'live',
+      },
+      include: {
+        curator: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+          },
+        },
+      },
+      orderBy: {
+        startedAt: 'desc',
+      },
+      take: 20,
+    });
+
+    res.json({
+      success: true,
+      count: liveBroadcasts.length,
+      broadcasts: liveBroadcasts.map(b => ({
+        id: b.id,
+        curatorId: b.curatorId,
+        curatorUsername: b.curator.username,
+        curatorDisplayName: b.curator.displayName,
+        caption: b.caption,
+        status: b.status,
+        startedAt: b.startedAt,
+        lastHeartbeatAt: b.lastHeartbeatAt,
+      })),
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
