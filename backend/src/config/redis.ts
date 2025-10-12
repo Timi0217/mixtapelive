@@ -31,6 +31,23 @@ redis.on('ready', () => {
 
 // Cache helper functions
 export class CacheService {
+  // Generic Redis operations
+  static async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
+    if (ttlSeconds) {
+      await redis.setex(key, ttlSeconds, value);
+    } else {
+      await redis.set(key, value);
+    }
+  }
+
+  static async get(key: string): Promise<string | null> {
+    return await redis.get(key);
+  }
+
+  static async del(key: string): Promise<void> {
+    await redis.del(key);
+  }
+
   // Store currently playing track for a curator
   static async setCurrentlyPlaying(
     curatorId: string,
