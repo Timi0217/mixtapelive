@@ -101,19 +101,19 @@ class PushNotificationService {
       // Extract platform from device info
       const platform = deviceInfo?.platform || 'unknown';
 
-      // Check if token already exists for this user
-      const existing = await prisma.pushNotificationToken.findFirst({
+      // Check if token already exists (for any user) due to unique constraint
+      const existing = await prisma.pushNotificationToken.findUnique({
         where: {
-          userId,
           token,
         },
       });
 
       if (existing) {
-        // Update existing token
+        // Update existing token (reassign to current user if different)
         await prisma.pushNotificationToken.update({
           where: { id: existing.id },
           data: {
+            userId, // Reassign to current user
             active: true,
             deviceInfo,
             platform,

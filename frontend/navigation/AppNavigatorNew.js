@@ -20,6 +20,7 @@ import PhoneLoginScreen from '../screens/PhoneLoginScreen';
 import LoginScreen from '../screens/LoginScreen';
 import UsernameOnboardingScreen from '../screens/UsernameOnboardingScreen';
 import MusicConnectionScreen from '../screens/MusicConnectionScreen';
+import WelcomeScreen from '../screens/WelcomeScreen';
 
 const AppNavigatorNew = () => {
   const { isAuthenticated, user, loading } = useAuth();
@@ -69,7 +70,11 @@ const AppNavigatorNew = () => {
   }
 
   if (!isAuthenticated) {
-    return <PhoneLoginScreen navigation={navigation} />;
+    // Show Welcome screen first, or PhoneLogin if navigating back
+    if (currentScreen === 'PhoneLogin') {
+      return <PhoneLoginScreen navigation={navigation} />;
+    }
+    return <WelcomeScreen navigation={navigation} />;
   }
 
   // Show username onboarding if user is authenticated but has no username

@@ -15,37 +15,34 @@ import {
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+
 // Mixtape theme with Apple design principles
 const theme = {
   colors: {
-    // Mixtape brand colors with Apple aesthetics
-    bgPrimary: '#e0d4ff',      // Mixtape purple background
+    // Match Welcome screen gradient
+    bgGradient: ['#f5e6ff', '#ffd6f0', '#ffe6f5'],
     bgSecondary: '#ffffff',    // Pure white for cards/surfaces
-    
-    // Apple's text hierarchy with Mixtape context
+
+    // Apple's text hierarchy
     textPrimary: '#1C1C1E',    // iOS label - highest contrast
     textSecondary: '#3A3A3C',  // iOS secondary label
-    textTertiary: '#48484A',   // iOS tertiary label
-    textQuaternary: '#8E8E93', // iOS quaternary label
-    
-    // Mixtape button system
-    primaryButton: '#8B5CF6',  // Mixtape purple - primary actions
-    secondaryButton: '#F2F2F7', // iOS secondary background
-    accent: '#10B981',         // Mixtape emerald green
-    
+    textTertiary: '#8E8E93',   // iOS tertiary label
+
+    // Mixtape button system - now black like welcome screen
+    primaryButton: '#1C1C1E',  // Black primary button
+    secondaryButton: 'transparent', // Transparent secondary
+    accent: '#10B981',
+
     // Apple's semantic colors
-    systemRed: '#FF3B30',      // Destructive actions
-    systemGreen: '#34C759',    // Success states
-    systemOrange: '#FF9500',   // Warning states
-    
+    systemRed: '#FF3B30',
+    systemGreen: '#34C759',
+    systemOrange: '#FF9500',
+
     // Apple's separators
-    separator: 'rgba(60, 60, 67, 0.29)',      // Opaque separator
-    separatorNonOpaque: 'rgba(60, 60, 67, 0.36)', // Non-opaque separator
-    
-    // Apple's fills with purple tint
-    fill: 'rgba(139, 92, 246, 0.1)',          // Purple-tinted fill
-    secondaryFill: 'rgba(139, 92, 246, 0.06)', // Light purple fill
-    tertiaryFill: 'rgba(139, 92, 246, 0.03)',  // Very light purple fill
+    separator: 'rgba(28, 28, 30, 0.1)',
+    separatorNonOpaque: 'rgba(28, 28, 30, 0.15)',
   },
   spacing: {
     xs: 2,
@@ -95,17 +92,8 @@ const PhoneLoginScreen = ({ onBack }) => {
   const usernameInputRef = useRef(null);
 
   const formatPhoneNumber = (text) => {
-    // Remove all non-numeric characters
-    const cleaned = text.replace(/\D/g, '');
-    
-    // Format as (XXX) XXX-XXXX
-    if (cleaned.length >= 6) {
-      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
-    } else if (cleaned.length >= 3) {
-      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
-    } else {
-      return cleaned;
-    }
+    // Just remove non-numeric characters - no auto-formatting
+    return text.replace(/\D/g, '');
   };
 
   const handlePhoneSubmit = async () => {
@@ -250,35 +238,41 @@ const PhoneLoginScreen = ({ onBack }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+      <LinearGradient
+        colors={theme.colors.bgGradient}
+        style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <View style={styles.header}>
-            {step !== "phone" ? (
-              <TouchableOpacity style={styles.backButton} onPress={handleBackToPhone}>
-                <Text style={styles.backButtonText}>← Back</Text>
-              </TouchableOpacity>
-            ) : (
-              !!onBack && (
-                <TouchableOpacity style={styles.backButton} onPress={onBack}>
-                  <Text style={styles.backButtonText}>← Back</Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardView}
+        >
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View style={styles.header}>
+              {step !== "phone" ? (
+                <TouchableOpacity style={styles.backButton} onPress={handleBackToPhone}>
+                  <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
                 </TouchableOpacity>
-              )
-            )}
-          </View>
+              ) : (
+                !!onBack && (
+                  <TouchableOpacity style={styles.backButton} onPress={onBack}>
+                    <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
+                  </TouchableOpacity>
+                )
+              )}
+            </View>
 
-          {/* Content */}
-          <View style={styles.content}>
+            {/* Content */}
+            <View style={styles.content}>
             {step === 'phone' && (
               <>
                 {/* Phone Number Step */}
                 <View style={styles.heroSection}>
                   <Text style={styles.title}>Phone Number</Text>
                   <Text style={styles.subtitle}>
-                    We'll send you a verification code to confirm your number
+                    We'll send you a verification code
                   </Text>
                 </View>
 
@@ -290,10 +284,10 @@ const PhoneLoginScreen = ({ onBack }) => {
                       style={styles.textInput}
                       value={phoneNumber}
                       onChangeText={(text) => setPhoneNumber(formatPhoneNumber(text))}
-                      placeholder="(555) 123-4567"
+                      placeholder="5551234567"
                       placeholderTextColor={theme.colors.textTertiary}
                       keyboardType="phone-pad"
-                      maxLength={14}
+                      maxLength={10}
                       autoFocus
                     />
                   </View>
@@ -427,14 +421,18 @@ const PhoneLoginScreen = ({ onBack }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </LinearGradient>
+  </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.bgPrimary,
+    backgroundColor: '#f5e6ff',
+  },
+  gradient: {
+    flex: 1,
   },
   keyboardView: {
     flex: 1,
@@ -442,177 +440,163 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  
-  // Header - Apple's minimal navigation style
+
+  // Header - Minimal back button
   header: {
-    paddingHorizontal: theme.spacing.xxxxl,
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.lg,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   backButton: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 0,
-    paddingVertical: theme.spacing.sm,
-  },
-  backButtonText: {
-    fontSize: 17,
-    fontWeight: theme.typography.regular,
-    color: theme.colors.systemBlue,
-    letterSpacing: -0.24, // Apple's SF Pro letter spacing
+    padding: 8,
   },
   
-  // Content - Apple's generous white space
+  // Content
   content: {
     flex: 1,
-    paddingHorizontal: theme.spacing.xxxxl,
+    paddingHorizontal: 40,
     justifyContent: 'flex-start',
+    paddingTop: 40,
   },
-  
-  // Hero Section - Apple's large title style
+
+  // Hero Section - Minimal and clean
   heroSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xxxxl * 2,
-    paddingTop: theme.spacing.xxxl,
+    marginBottom: 48,
   },
   title: {
-    fontSize: 34, // Apple's Large Title size
-    fontWeight: theme.typography.bold,
+    fontSize: 28,
+    fontWeight: '700',
     color: theme.colors.textPrimary,
     textAlign: 'center',
-    marginBottom: theme.spacing.xl,
-    letterSpacing: -0.41, // Apple's Large Title letter spacing
-    lineHeight: 41, // Apple's Large Title line height
+    marginBottom: 12,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 17, // Apple's Body text size
-    fontWeight: theme.typography.regular,
+    fontSize: 15,
+    fontWeight: '500',
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22, // Apple's Body line height
-    letterSpacing: -0.24,
-    paddingHorizontal: theme.spacing.lg,
+    lineHeight: 21,
+    paddingHorizontal: 20,
   },
   
-  // Input Section - Apple's form styling
+  // Input Section
   inputSection: {
-    gap: theme.spacing.xxxl,
+    gap: 24,
   },
   inputContainer: {
-    gap: theme.spacing.md,
+    gap: 8,
   },
   inputLabel: {
-    fontSize: 17,
-    fontWeight: theme.typography.semibold,
+    fontSize: 15,
+    fontWeight: '600',
     color: theme.colors.textPrimary,
-    letterSpacing: -0.24,
-    marginBottom: theme.spacing.sm,
+    marginBottom: 4,
   },
   textInput: {
     backgroundColor: theme.colors.bgSecondary,
-    borderRadius: theme.borderRadius.lg,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.xl,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     fontSize: 17,
-    fontWeight: theme.typography.regular,
+    fontWeight: '500',
     color: theme.colors.textPrimary,
-    borderWidth: 0.5, // Apple's hairline border
+    borderWidth: 1,
     borderColor: theme.colors.separator,
-    letterSpacing: -0.24,
-    // Apple's subtle shadow
-    shadowColor: 'rgba(0, 0, 0, 0.04)',
+    shadowColor: 'rgba(0, 0, 0, 0.05)',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
-    shadowRadius: 3,
+    shadowRadius: 2,
     elevation: 1,
   },
   codeInput: {
     textAlign: 'center',
-    letterSpacing: theme.spacing.lg, // Generous spacing for code
-    fontSize: 28, // Larger for better readability
-    fontWeight: theme.typography.medium,
-    fontVariant: ['tabular-nums'], // Monospace numbers
+    letterSpacing: 12,
+    fontSize: 28,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
-  
-  // Buttons - Mixtape purple with Apple style
+
+  // Buttons - Black primary like welcome screen
   primaryButton: {
     backgroundColor: theme.colors.primaryButton,
-    borderRadius: theme.borderRadius.xl,
-    paddingVertical: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.xxxl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 50, // Apple's recommended touch target
-    // Mixtape purple button shadow
-    shadowColor: 'rgba(139, 92, 246, 0.3)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  primaryButtonText: {
-    fontSize: 17,
-    fontWeight: theme.typography.semibold,
-    color: '#FFFFFF',
-    letterSpacing: -0.24,
-  },
-  buttonDisabled: {
-    opacity: 0.6, // Apple's disabled state
-    shadowOpacity: 0,
-  },
-  secondaryButton: {
-    backgroundColor: theme.colors.systemGray6,
-    borderRadius: theme.borderRadius.xl,
-    paddingVertical: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.xxxl,
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 50,
-    borderWidth: 0.5,
-    borderColor: theme.colors.separator,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  primaryButtonText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+    shadowOpacity: 0,
+  },
+  secondaryButton: {
+    backgroundColor: theme.colors.secondaryButton,
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
+    borderWidth: 1.5,
+    borderColor: 'rgba(28, 28, 30, 0.2)',
   },
   secondaryButtonText: {
     fontSize: 17,
-    fontWeight: theme.typography.medium,
-    color: theme.colors.primaryButton,
-    letterSpacing: -0.24,
+    fontWeight: '600',
+    color: theme.colors.textPrimary,
+    letterSpacing: 0.3,
   },
-  
-  // Resend Section - Apple's secondary text style
+
+
+  // Resend Section
   resendSection: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xxxl,
+    paddingVertical: 24,
   },
   countdownText: {
-    fontSize: 15, // Apple's Footnote size
-    fontWeight: theme.typography.regular,
+    fontSize: 14,
+    fontWeight: '500',
     color: theme.colors.textTertiary,
-    letterSpacing: -0.23,
   },
   resendText: {
-    fontSize: 15,
-    fontWeight: theme.typography.medium,
-    color: theme.colors.primaryButton,
-    letterSpacing: -0.23,
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.textPrimary,
   },
 
   // Dev code display
   devCodeContainer: {
     backgroundColor: '#FFF3CD',
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.xl,
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#FFC107',
   },
   devCodeLabel: {
     fontSize: 13,
-    fontWeight: theme.typography.semibold,
+    fontWeight: '600',
     color: '#856404',
-    marginBottom: theme.spacing.sm,
+    marginBottom: 4,
   },
   devCodeText: {
     fontSize: 24,
-    fontWeight: theme.typography.bold,
+    fontWeight: '700',
     color: '#856404',
     letterSpacing: 4,
     fontVariant: ['tabular-nums'],
