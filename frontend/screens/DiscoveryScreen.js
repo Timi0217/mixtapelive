@@ -522,8 +522,8 @@ const styles = StyleSheet.create({
   },
   bubblesContainer: {
     paddingHorizontal: 24,
+    paddingTop: 16,
     paddingBottom: 40,
-    flexGrow: 0,
   },
   bubblesGrid: {
     flexDirection: 'row',

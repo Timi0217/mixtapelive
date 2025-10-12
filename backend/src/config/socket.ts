@@ -203,6 +203,13 @@ export class WebSocketServer {
             if (currentTrack) {
               // Broadcast track change to all listeners in this broadcast
               this.io.to(`broadcast:${broadcast.id}`).emit('track-changed', currentTrack);
+
+              // Also emit globally so Live page can update broadcast cards
+              this.io.emit('broadcast-track-updated', {
+                broadcastId: broadcast.id,
+                curatorId: broadcast.curatorId,
+                currentTrack,
+              });
             }
           } catch (error) {
             console.error(`Error polling broadcast ${broadcast.id}:`, error);

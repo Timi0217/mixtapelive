@@ -160,15 +160,29 @@ const LiveScreen = ({ navigation }) => {
     loadData();
   }, [loadData]);
 
+  const handleBroadcastTrackUpdated = useCallback((data) => {
+    setLiveBroadcasts(prev => prev.map(broadcast => {
+      if (broadcast.id === data.broadcastId) {
+        return {
+          ...broadcast,
+          currentTrack: data.currentTrack,
+        };
+      }
+      return broadcast;
+    }));
+  }, []);
+
   useEffect(() => {
     const unsubscribeStarted = socketService.on('broadcastStarted', handleBroadcastStarted);
     const unsubscribeEnded = socketService.on('broadcastEnded', handleBroadcastEnded);
+    const unsubscribeTrackUpdated = socketService.on('broadcast-track-updated', handleBroadcastTrackUpdated);
 
     return () => {
       unsubscribeStarted();
       unsubscribeEnded();
+      unsubscribeTrackUpdated();
     };
-  }, [handleBroadcastStarted, handleBroadcastEnded]);
+  }, [handleBroadcastStarted, handleBroadcastEnded, handleBroadcastTrackUpdated]);
 
   // Load saved tracks from AsyncStorage
   useEffect(() => {

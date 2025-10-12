@@ -277,7 +277,7 @@ const BroadcastScreen = ({ route, navigation }) => {
 
   const loadMessages = async () => {
     try {
-      const response = await api.get(`/chat/${broadcastId}/messages?limit=100`);
+      const response = await api.get(`/chat/messages/${broadcastId}?limit=100`);
       if (response.data && response.data.messages) {
         setMessages(response.data.messages);
       }
