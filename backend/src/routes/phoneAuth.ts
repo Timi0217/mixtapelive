@@ -80,52 +80,75 @@ router.post('/send-code', phoneCodeLimiter, async (req, res) => {
       });
     }
 
-    // Generate verification code
-    const verificationCode = generateCode();
     let smsSent = false;
+    let fallbackCode: string | null = null;
 
-    // Try to send SMS via Twilio (manual SMS, not Verify service)
-    if (twilioClient && config.twilio.phoneNumber) {
+    console.log('🔍 Twilio Verify Debug:', {
+      hasClient: !!twilioClient,
+      hasAccountSid: !!config.twilio.accountSid,
+      hasAuthToken: !!config.twilio.authToken,
+      hasVerifySid: !!config.twilio.verifySid,
+      verifySidLength: config.twilio.verifySid?.length || 0,
+      verifySidPrefix: config.twilio.verifySid?.substring(0, 4) || 'NONE',
+      phoneNumber: phoneNumber
+    });
+
+    // Use Twilio Verify service (recommended for production)
+    if (twilioClient && config.twilio.verifySid) {
       try {
-        await twilioClient.messages.create({
-          body: `Your Mixtape verification code is: ${verificationCode}`,
-          from: config.twilio.phoneNumber,
-          to: phoneNumber
-        });
+        console.log(`📤 Sending Twilio Verify to ${phoneNumber} using SID: ${config.twilio.verifySid.substring(0, 10)}...`);
+
+        const verification = await twilioClient.verify.v2
+          .services(config.twilio.verifySid)
+          .verifications.create({
+            to: phoneNumber,
+            channel: 'sms'
+          });
+
         smsSent = true;
-        console.log(`✅ Twilio SMS sent to ${phoneNumber}`);
+        console.log(`✅ Twilio Verify SMS sent successfully!`, {
+          status: verification.status,
+          to: verification.to,
+          channel: verification.channel,
+          valid: verification.valid
+        });
+
+        // Store marker that we're using Twilio Verify
+        await storeVerificationCode(phoneNumber, 'TWILIO_VERIFY');
       } catch (twilioError: any) {
-        console.error('Twilio SMS error:', twilioError);
-        console.error('Twilio error details:', {
+        console.error('❌ Twilio Verify Error:', {
           message: twilioError.message,
           code: twilioError.code,
           status: twilioError.status,
-          moreInfo: twilioError.moreInfo
+          moreInfo: twilioError.moreInfo,
+          details: twilioError.details
         });
-        // Continue without SMS - code will be returned in response for dev
+
+        // Fallback: generate manual code
+        fallbackCode = generateCode();
+        await storeVerificationCode(phoneNumber, fallbackCode);
+        console.log(`📱 Fallback to manual code for ${phoneNumber}: ${fallbackCode}`);
       }
     } else {
-      console.log('⚠️ Twilio not configured (missing client or phone number)');
-      console.log('Twilio config:', {
-        hasClient: !!twilioClient,
-        hasAccountSid: !!config.twilio.accountSid,
-        hasAuthToken: !!config.twilio.authToken,
-        hasPhoneNumber: !!config.twilio.phoneNumber,
-        phoneNumber: config.twilio.phoneNumber || 'NOT SET'
-      });
+      console.log('⚠️ Twilio Verify not configured - using manual verification');
+      fallbackCode = generateCode();
+      await storeVerificationCode(phoneNumber, fallbackCode);
+      console.log(`📱 Manual verification code for ${phoneNumber}: ${fallbackCode}`);
     }
-
-    // Store verification code in Redis
-    await storeVerificationCode(phoneNumber, verificationCode);
-    console.log(`📱 Verification code for ${phoneNumber}: ${verificationCode}`);
 
     res.json({
       success: true,
       message: smsSent ? 'Verification code sent via SMS' : 'Verification code generated',
-      // Include code in response for development (remove in production if SMS is working)
-      ...(config.nodeEnv !== 'production' && { code: verificationCode }),
-      // Also include if SMS failed to send
-      ...(!smsSent && { code: verificationCode })
+      // Only include code in response if using fallback (not Twilio Verify)
+      ...(fallbackCode && { code: fallbackCode }),
+      // Debug info in development
+      ...(config.nodeEnv !== 'production' && {
+        debug: {
+          smsSent,
+          usingTwilioVerify: !fallbackCode,
+          hasVerifySid: !!config.twilio.verifySid
+        }
+      })
     });
   } catch (error) {
     console.error('Send code error:', error);
@@ -156,12 +179,63 @@ router.post('/verify-code', phoneLoginLimiter, async (req, res) => {
       });
     }
 
-    // Verify the code matches
-    if (storedCode !== code) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid verification code'
-      });
+    console.log('🔍 Verifying code:', {
+      phoneNumber,
+      storedCode: storedCode.substring(0, 10) + '...',
+      providedCode: code,
+      isTwilioVerify: storedCode === 'TWILIO_VERIFY'
+    });
+
+    // If using Twilio Verify, verify through Twilio
+    if (storedCode === 'TWILIO_VERIFY') {
+      if (!twilioClient || !config.twilio.verifySid) {
+        return res.status(500).json({
+          success: false,
+          error: 'Twilio Verify not configured'
+        });
+      }
+
+      try {
+        console.log(`📤 Checking code with Twilio Verify for ${phoneNumber}...`);
+
+        const verificationCheck = await twilioClient.verify.v2
+          .services(config.twilio.verifySid)
+          .verificationChecks.create({
+            to: phoneNumber,
+            code: code
+          });
+
+        console.log('✅ Twilio Verify check result:', {
+          status: verificationCheck.status,
+          valid: verificationCheck.valid,
+          to: verificationCheck.to
+        });
+
+        if (verificationCheck.status !== 'approved') {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid verification code'
+          });
+        }
+      } catch (twilioError: any) {
+        console.error('❌ Twilio Verify check error:', {
+          message: twilioError.message,
+          code: twilioError.code,
+          status: twilioError.status
+        });
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid verification code'
+        });
+      }
+    } else {
+      // Manual code verification
+      if (storedCode !== code) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid verification code'
+        });
+      }
     }
 
     console.log(`✅ Verification code verified for ${phoneNumber}`);
