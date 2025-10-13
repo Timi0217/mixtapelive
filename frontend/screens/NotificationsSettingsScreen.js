@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,12 @@ import {
   ScrollView,
   Switch,
   StatusBar,
+  SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import api from '../services/api';
 
 const NotificationsSettingsScreen = ({ navigation }) => {
   const { theme, isDark } = useTheme();
@@ -17,10 +20,76 @@ const NotificationsSettingsScreen = ({ navigation }) => {
   const [broadcastStarts, setBroadcastStarts] = useState(true);
   const [newMessages, setNewMessages] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const response = await api.get('/notifications/settings');
+      const settings = response.data.settings || {};
+
+      setPushEnabled(settings.pushEnabled ?? true);
+      setNewFollowers(settings.newFollowers ?? true);
+      setBroadcastStarts(settings.broadcastStarts ?? true);
+      setNewMessages(settings.newMessages ?? true);
+      setEmailNotifications(settings.emailNotifications ?? false);
+    } catch (error) {
+      console.error('Error loading notification settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateSettings = async (key, value) => {
+    try {
+      await api.put('/notifications/settings', {
+        [key]: value,
+      });
+    } catch (error) {
+      console.error('Error updating notification settings:', error);
+    }
+  };
+
+  const handlePushEnabledChange = (value) => {
+    setPushEnabled(value);
+    updateSettings('pushEnabled', value);
+  };
+
+  const handleNewFollowersChange = (value) => {
+    setNewFollowers(value);
+    updateSettings('newFollowers', value);
+  };
+
+  const handleBroadcastStartsChange = (value) => {
+    setBroadcastStarts(value);
+    updateSettings('broadcastStarts', value);
+  };
+
+  const handleNewMessagesChange = (value) => {
+    setNewMessages(value);
+    updateSettings('newMessages', value);
+  };
+
+  const handleEmailNotificationsChange = (value) => {
+    setEmailNotifications(value);
+    updateSettings('emailNotifications', value);
+  };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.bgPrimary }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.bgPrimary }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.colors.textPrimary }]}>Notifications</Text>
+        <View style={styles.backButton} />
+      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Push Notifications */}
@@ -48,7 +117,7 @@ const NotificationsSettingsScreen = ({ navigation }) => {
             </View>
             <Switch
               value={pushEnabled}
-              onValueChange={setPushEnabled}
+              onValueChange={handlePushEnabledChange}
               trackColor={{ false: theme.colors.border, true: theme.colors.accent }}
               thumbColor="#fff"
               ios_backgroundColor={theme.colors.border}
@@ -81,7 +150,7 @@ const NotificationsSettingsScreen = ({ navigation }) => {
             </View>
             <Switch
               value={newFollowers}
-              onValueChange={setNewFollowers}
+              onValueChange={handleNewFollowersChange}
               trackColor={{ false: theme.colors.border, true: theme.colors.accent }}
               thumbColor="#fff"
               ios_backgroundColor={theme.colors.border}
@@ -108,7 +177,7 @@ const NotificationsSettingsScreen = ({ navigation }) => {
             </View>
             <Switch
               value={broadcastStarts}
-              onValueChange={setBroadcastStarts}
+              onValueChange={handleBroadcastStartsChange}
               trackColor={{ false: theme.colors.border, true: theme.colors.accent }}
               thumbColor="#fff"
               ios_backgroundColor={theme.colors.border}
@@ -135,7 +204,7 @@ const NotificationsSettingsScreen = ({ navigation }) => {
             </View>
             <Switch
               value={newMessages}
-              onValueChange={setNewMessages}
+              onValueChange={handleNewMessagesChange}
               trackColor={{ false: theme.colors.border, true: theme.colors.accent }}
               thumbColor="#fff"
               ios_backgroundColor={theme.colors.border}
@@ -169,7 +238,7 @@ const NotificationsSettingsScreen = ({ navigation }) => {
             </View>
             <Switch
               value={emailNotifications}
-              onValueChange={setEmailNotifications}
+              onValueChange={handleEmailNotificationsChange}
               trackColor={{ false: theme.colors.border, true: theme.colors.accent }}
               thumbColor="#fff"
               ios_backgroundColor={theme.colors.border}
@@ -177,13 +246,32 @@ const NotificationsSettingsScreen = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '600',
   },
   scrollContent: {
     paddingBottom: 40,

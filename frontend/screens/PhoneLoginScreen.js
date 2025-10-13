@@ -77,7 +77,7 @@ const theme = {
   }
 };
 
-const PhoneLoginScreen = ({ onBack }) => {
+const PhoneLoginScreen = ({ onBack, navigation }) => {
   const { login } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
@@ -256,11 +256,18 @@ const PhoneLoginScreen = ({ onBack }) => {
                   <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
                 </TouchableOpacity>
               ) : (
-                !!onBack && (
-                  <TouchableOpacity style={styles.backButton} onPress={onBack}>
-                    <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
-                  </TouchableOpacity>
-                )
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => {
+                    if (onBack) {
+                      onBack();
+                    } else if (navigation?.goBack) {
+                      navigation.goBack();
+                    }
+                  }}
+                >
+                  <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
+                </TouchableOpacity>
               )}
             </View>
 

@@ -277,6 +277,7 @@ const DiscoveryScreen = ({ navigation }) => {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filtersContainer}
+        style={styles.filtersScrollView}
       >
         {filters.map(filter => {
           const isActive = activeFilters.has(filter.id);
@@ -502,9 +503,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
+  filtersScrollView: {
+    flexGrow: 0,
+  },
   filtersContainer: {
     paddingHorizontal: 24,
-    paddingBottom: 35,
+    paddingBottom: 16,
   },
   filterChip: {
     flexDirection: 'row',

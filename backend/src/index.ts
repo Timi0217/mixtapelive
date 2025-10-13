@@ -73,6 +73,7 @@ import phoneAuthRoutes from './routes/phoneAuth';
 import userRoutes from './routes/users';
 import musicRoutes from './routes/music';
 import notificationRoutes from './routes/notifications';
+// Test routes - only enable in development
 import testRoutes from './routes/test';
 import appleMusicCleanRoutes from './routes/apple-music-clean';
 // New Mixtape Live routes
@@ -80,6 +81,7 @@ import broadcastRoutes from './routes/broadcasts';
 import followRoutes from './routes/follows';
 import chatRoutes from './routes/chat';
 import adminRoutes from './routes/admin';
+import privacyRoutes from './routes/privacy';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/oauth', oauthRoutes);
@@ -87,13 +89,17 @@ app.use('/api/auth/phone', phoneAuthRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/music', musicRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/test', testRoutes);
+// Only enable test routes in development
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/test', testRoutes);
+}
 app.use('/api/oauth', appleMusicCleanRoutes);
 // New Mixtape Live routes
 app.use('/api/broadcasts', broadcastRoutes);
 app.use('/api/follows', followRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/privacy', privacyRoutes);
 app.use('/', oauthRoutes);
 
 app.use('*', (req, res) => {

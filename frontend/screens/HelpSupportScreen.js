@@ -8,6 +8,7 @@ import {
   StatusBar,
   Linking,
   Alert,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -23,6 +24,7 @@ const HelpSupportScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error('Error opening link:', error);
+      Alert.alert('Error', 'Could not open link. Please try again later.');
     }
   };
 
@@ -33,7 +35,7 @@ const HelpSupportScreen = ({ navigation }) => {
       [
         {
           text: 'Email',
-          onPress: () => handleOpenLink('mailto:support@mixtape.live'),
+          onPress: () => handleOpenLink('mailto:support@mixtapelive.app?subject=Mixtape Feedback'),
         },
         { text: 'Cancel', style: 'cancel' },
       ]
@@ -41,8 +43,17 @@ const HelpSupportScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.bgPrimary }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.bgPrimary }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.colors.textPrimary }]}>Help & Support</Text>
+        <View style={styles.backButton} />
+      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Get Help */}
@@ -53,41 +64,7 @@ const HelpSupportScreen = ({ navigation }) => {
 
           <TouchableOpacity
             style={[styles.menuItem, { borderBottomColor: theme.colors.separator }]}
-            onPress={() => handleOpenLink('https://mixtape.live/help')}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name="book-outline"
-              size={24}
-              color={theme.colors.textSecondary}
-              style={styles.menuIcon}
-            />
-            <Text style={[styles.menuText, { color: theme.colors.textPrimary }]}>
-              Help Center
-            </Text>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.menuItem, { borderBottomColor: theme.colors.separator }]}
-            onPress={() => handleOpenLink('https://mixtape.live/faq')}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name="help-circle-outline"
-              size={24}
-              color={theme.colors.textSecondary}
-              style={styles.menuIcon}
-            />
-            <Text style={[styles.menuText, { color: theme.colors.textPrimary }]}>
-              FAQ
-            </Text>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.menuItem, { borderBottomWidth: 0 }]}
-            onPress={() => handleOpenLink('https://mixtape.live/contact')}
+            onPress={() => handleOpenLink('mailto:support@mixtapelive.app')}
             activeOpacity={0.7}
           >
             <Ionicons
@@ -98,6 +75,23 @@ const HelpSupportScreen = ({ navigation }) => {
             />
             <Text style={[styles.menuText, { color: theme.colors.textPrimary }]}>
               Contact Support
+            </Text>
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuItem, { borderBottomWidth: 0 }]}
+            onPress={handleSendFeedback}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="chatbubble-outline"
+              size={24}
+              color={theme.colors.textSecondary}
+              style={styles.menuIcon}
+            />
+            <Text style={[styles.menuText, { color: theme.colors.textPrimary }]}>
+              Send Feedback
             </Text>
             <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
           </TouchableOpacity>
@@ -181,13 +175,32 @@ const HelpSupportScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '600',
   },
   scrollContent: {
     paddingBottom: 40,

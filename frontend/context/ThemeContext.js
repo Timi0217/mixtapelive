@@ -102,7 +102,7 @@ const darkTheme = {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true); // Default to dark mode
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -120,6 +120,7 @@ export const ThemeProvider = ({ children }) => {
       if (savedTheme !== null) {
         setIsDark(savedTheme === 'dark');
       }
+      // If no saved theme, keep default dark mode
     } catch (error) {
       console.error('Failed to load theme:', error);
     } finally {

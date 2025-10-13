@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, SafeAreaView, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -18,9 +18,6 @@ const WelcomeScreen = ({ navigation }) => {
         {/* Content Container */}
         <View style={styles.content}>
 
-          {/* Spacer for vertical centering */}
-          <View style={styles.topSpacer} />
-
           {/* Logo - Simple text like pitch deck */}
           <Text style={styles.logo}>MIXTAPE</Text>
 
@@ -29,8 +26,12 @@ const WelcomeScreen = ({ navigation }) => {
             SHARE YOUR AIRPODS WITH THE WORLD
           </Text>
 
-          {/* Spacer */}
-          <View style={styles.middleSpacer} />
+          {/* AirPods Graphic */}
+          <Image
+            source={require('../assets/images/airpodshomepage.png')}
+            style={[styles.heroImage, { opacity: 0.85 }]}
+            resizeMode="contain"
+          />
 
           {/* CTA Buttons - Minimalist Apple Style */}
           <View style={styles.buttonsContainer}>
@@ -39,15 +40,7 @@ const WelcomeScreen = ({ navigation }) => {
               onPress={() => navigation.navigate('PhoneLogin')}
               activeOpacity={0.8}
             >
-              <Text style={styles.primaryButtonText}>Get Started</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => navigation.navigate('PhoneLogin')}
-              activeOpacity={0.6}
-            >
-              <Text style={styles.secondaryButtonText}>Sign In</Text>
+              <Text style={styles.primaryButtonText}>Continue with Phone</Text>
             </TouchableOpacity>
           </View>
 
@@ -80,13 +73,23 @@ const styles = StyleSheet.create({
 
   // Spacers for better vertical distribution
   topSpacer: {
-    flex: 0.5,
+    height: 0,
   },
   middleSpacer: {
     flex: 1,
   },
   bottomSpacer: {
     height: 60,
+  },
+
+  // Hero Image - AirPods graphic
+  heroImage: {
+    width: width * 1.17,
+    height: height * 0.396,
+    alignSelf: 'center',
+    marginTop: 50,
+    marginBottom: 20,
+    marginLeft: 45,
   },
 
   // Logo - Bold, minimal like pitch deck
@@ -96,7 +99,8 @@ const styles = StyleSheet.create({
     color: '#1C1C1E',
     letterSpacing: 4,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+    marginTop: 30,
   },
 
   // Tagline - Bold and uppercase
@@ -106,7 +110,8 @@ const styles = StyleSheet.create({
     color: '#1C1C1E',
     textAlign: 'center',
     letterSpacing: 0.5,
-    paddingHorizontal: 30,
+    paddingHorizontal: 0,
+    marginBottom: 24,
   },
 
   // Buttons - Clean Apple design
@@ -114,6 +119,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 340,
     gap: 12,
+    marginTop: 120,
   },
   primaryButton: {
     backgroundColor: '#1C1C1E',

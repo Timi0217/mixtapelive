@@ -189,7 +189,7 @@ export class WebSocketServer {
 
   // Poll for currently playing tracks and broadcast changes
   private startPolling() {
-    // Poll every 10 seconds
+    // Poll every 3 seconds for better real-time sync with music changes
     this.pollingInterval = setInterval(async () => {
       try {
         const liveBroadcasts = await BroadcastService.getLiveBroadcasts();
@@ -218,7 +218,7 @@ export class WebSocketServer {
       } catch (error) {
         console.error('Error in polling interval:', error);
       }
-    }, 10000); // 10 seconds
+    }, 3000); // 3 seconds for faster music updates
 
     // DISABLED: Auto-cleanup of inactive broadcasts
     // Test broadcasts should stay live until manually stopped

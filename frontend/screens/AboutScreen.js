@@ -9,38 +9,15 @@ import {
   Alert,
   Linking,
   Modal,
+  StatusBar,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 import PrivacyPolicyScreen from './PrivacyPolicyScreen';
 import TermsOfServiceScreen from './TermsOfServiceScreen';
 
-const theme = {
-  colors: {
-    bgPrimary: '#f8f9fa',
-    surfaceWhite: '#ffffff',
-    textPrimary: '#1a1a1a',
-    textSecondary: '#6b7280',
-    textTertiary: '#9ca3af',
-    primaryButton: '#8B5CF6',
-    secondaryButton: '#F3F4F6',
-    borderLight: '#E5E7EB',
-    shadow: 'rgba(0, 0, 0, 0.1)',
-    success: '#10B981',
-    error: '#EF4444',
-  },
-  spacing: {
-    sm: 8,
-    md: 16,
-    lg: 24,
-    xl: 32,
-  },
-  borderRadius: {
-    sm: 8,
-    md: 16,
-    lg: 20,
-  },
-};
-
-export default function AboutScreen({ onClose }) {
+export default function AboutScreen({ navigation }) {
+  const { theme, isDark } = useTheme();
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showTermsOfService, setShowTermsOfService] = useState(false);
   const handleLinkPress = (url) => {
@@ -52,16 +29,12 @@ export default function AboutScreen({ onClose }) {
   const handleFeedback = () => {
     Alert.alert(
       'Send Feedback',
-      'Choose how you\'d like to send feedback:',
+      'We\'d love to hear from you!',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Email', 
-          onPress: () => handleLinkPress('mailto:feedback@mixtape-app.com?subject=Mixtape Feedback')
-        },
-        { 
-          text: 'Twitter', 
-          onPress: () => handleLinkPress('https://twitter.com/mixtape_app')
+        {
+          text: 'Email',
+          onPress: () => handleLinkPress('mailto:support@mixtapelive.app?subject=Mixtape Feedback')
         },
       ]
     );
@@ -102,19 +75,13 @@ export default function AboutScreen({ onClose }) {
       icon: '🐛',
       title: 'Report a Bug',
       description: 'Let us know about any issues you encounter',
-      onPress: () => handleLinkPress('mailto:bugs@mixtape-app.com?subject=Bug Report'),
-    },
-    {
-      icon: '❓',
-      title: 'Help & FAQ',
-      description: 'Find answers to common questions',
-      onPress: () => Alert.alert('Coming Soon', 'Help documentation will be available in a future update.'),
+      onPress: () => handleLinkPress('mailto:support@mixtapelive.app?subject=Bug Report'),
     },
     {
       icon: '📧',
       title: 'Contact Support',
       description: 'Get help from our support team',
-      onPress: () => handleLinkPress('mailto:support@mixtape-app.com'),
+      onPress: () => handleLinkPress('mailto:support@mixtapelive.app'),
     },
   ];
 
@@ -139,104 +106,84 @@ export default function AboutScreen({ onClose }) {
     },
   ];
 
-  const socialItems = [
-    {
-      icon: '🐦',
-      title: 'Twitter',
-      description: 'Follow us for updates @mixtape_app',
-      onPress: () => handleLinkPress('https://twitter.com/mixtape_app'),
-    },
-    {
-      icon: '📱',
-      title: 'Instagram',
-      description: 'See what\'s happening @mixtape_app',
-      onPress: () => handleLinkPress('https://instagram.com/mixtape_app'),
-    },
-    {
-      icon: '🌐',
-      title: 'Website',
-      description: 'Visit our website for more info',
-      onPress: () => handleLinkPress('https://mixtape-app.com'),
-    },
-  ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.bgPrimary }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Text style={styles.closeButtonText}>✕</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.title}>About Mixtape</Text>
-        <View style={styles.placeholder} />
+        <Text style={[styles.headerTitle, { color: theme.colors.textPrimary }]}>About</Text>
+        <View style={styles.backButton} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* App Info Section */}
-        <View style={styles.appInfoSection}>
-          <View style={styles.appIcon}>
-            <Text style={styles.appIconText}>🎵</Text>
-          </View>
-          <Text style={styles.appName}>Mixtape</Text>
-          <Text style={styles.appVersion}>Version 1.0.0</Text>
-          <Text style={styles.appDescription}>
-            Share your daily music discoveries with friends. Every day, everyone submits one song by 11 PM. 
-            If everyone participates, you get a collaborative playlist at 8 AM. Miss the deadline? No playlist for anyone.
-          </Text>
-        </View>
-
-        {/* How It Works */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>How Mixtape Works</Text>
-          <View style={styles.stepsList}>
-            <View style={styles.step}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>1</Text>
-              </View>
-              <Text style={styles.stepText}>Create or join a group with friends</Text>
-            </View>
-            <View style={styles.step}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>2</Text>
-              </View>
-              <Text style={styles.stepText}>Everyone submits one song daily by 11 PM</Text>
-            </View>
-            <View style={styles.step}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>3</Text>
-              </View>
-              <Text style={styles.stepText}>If everyone participates, get your playlist at 8 AM</Text>
-            </View>
-            <View style={styles.step}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>4</Text>
-              </View>
-              <Text style={styles.stepText}>Miss the deadline? No playlist for the group</Text>
-            </View>
+        <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
+          <View style={styles.appInfoSection}>
+            <Text style={[styles.appName, { color: theme.colors.textPrimary }]}>Mixtape</Text>
+            <Text style={[styles.appTagline, { color: theme.colors.textSecondary }]}>
+              Share Your AirPods With The World
+            </Text>
+            <Text style={[styles.appVersion, { color: theme.colors.textTertiary }]}>Version 1.0.0</Text>
           </View>
         </View>
 
-        {renderSection('Support', supportItems)}
-        {renderSection('Legal', legalItems)}
-        {renderSection('Follow Us', socialItems)}
-
-        {/* Credits */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Credits</Text>
-          <Text style={styles.creditsText}>
-            Built with ❤️ by the Mixtape team{'\n\n'}
-            Special thanks to all the music platforms that make this possible:{'\n'}
-            • Spotify{'\n'}
-            • Apple Music{'\n\n'}
-            And to our beta testers who helped make Mixtape awesome! 🙏
+        {/* What is Mixtape */}
+        <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>What is Mixtape?</Text>
+          <Text style={[styles.descriptionText, { color: theme.colors.textSecondary }]}>
+            Mixtape is a live music broadcasting platform that lets you share what you're listening to in real-time with your followers.
+            Go live, broadcast your music, and connect with others who share your taste.
           </Text>
+        </View>
+
+        {/* Support Section */}
+        <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>Support</Text>
+          {supportItems.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[styles.menuItem, index < supportItems.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.separator }]}
+              onPress={item.onPress}
+            >
+              <Text style={styles.menuIcon}>{item.icon}</Text>
+              <View style={styles.menuTextContainer}>
+                <Text style={[styles.menuTitle, { color: theme.colors.textPrimary }]}>{item.title}</Text>
+                <Text style={[styles.menuDescription, { color: theme.colors.textTertiary }]}>{item.description}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Legal Section */}
+        <View style={[styles.section, { backgroundColor: theme.colors.cardBackground }]}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>Legal</Text>
+          {legalItems.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[styles.menuItem, index < legalItems.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.separator }]}
+              onPress={item.onPress}
+            >
+              <Text style={styles.menuIcon}>{item.icon}</Text>
+              <View style={styles.menuTextContainer}>
+                <Text style={[styles.menuTitle, { color: theme.colors.textPrimary }]}>{item.title}</Text>
+                <Text style={[styles.menuDescription, { color: theme.colors.textTertiary }]}>{item.description}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* Build Info */}
         <View style={styles.buildInfo}>
-          <Text style={styles.buildInfoText}>
-            Build: 1.0.0 (2024){'\n'}
-            Made with React Native & Expo{'\n'}
-            © 2024 Mixtape. All rights reserved.
+          <Text style={[styles.buildInfoText, { color: theme.colors.textTertiary }]}>
+            Version 1.0.0 (Build 1){'\n'}
+            © 2025 Mixtape. All rights reserved.
           </Text>
         </View>
       </ScrollView>
@@ -263,169 +210,104 @@ export default function AboutScreen({ onClose }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.bgPrimary,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    backgroundColor: theme.colors.surfaceWhite,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderLight,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
-  closeButton: {
-    padding: theme.spacing.sm,
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  closeButtonText: {
-    fontSize: 20,
-    color: theme.colors.textSecondary,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.textPrimary,
-  },
-  placeholder: {
-    width: 36,
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '600',
   },
   content: {
     flex: 1,
-    padding: theme.spacing.lg,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  section: {
+    marginBottom: 16,
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   appInfoSection: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
-    marginBottom: theme.spacing.lg,
-  },
-  appIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.colors.primaryButton,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.lg,
-    shadowColor: theme.colors.primaryButton,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  appIconText: {
-    fontSize: 36,
   },
   appName: {
-    fontSize: 28,
+    fontSize: 32,
+    fontWeight: '900',
+    letterSpacing: 2,
+    marginBottom: 8,
+  },
+  appTagline: {
+    fontSize: 13,
     fontWeight: '700',
-    color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
   },
   appVersion: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.lg,
-  },
-  appDescription: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-    paddingHorizontal: theme.spacing.md,
-  },
-  section: {
-    marginBottom: theme.spacing.xl,
+    fontSize: 14,
+    fontWeight: '500',
   },
   sectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+  },
+  descriptionText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  menuIcon: {
     fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.lg,
-  },
-  stepsList: {
-    gap: theme.spacing.lg,
-  },
-  step: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  stepNumber: {
     width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: theme.colors.primaryButton,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.md,
+    marginRight: 12,
   },
-  stepNumberText: {
-    color: 'white',
+  menuTextContainer: {
+    flex: 1,
+  },
+  menuTitle: {
     fontSize: 16,
     fontWeight: '600',
+    marginBottom: 2,
   },
-  stepText: {
-    flex: 1,
-    fontSize: 16,
-    color: theme.colors.textPrimary,
-    lineHeight: 24,
-  },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surfaceWhite,
-    padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    marginBottom: theme.spacing.md,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  listItemContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  listItemIcon: {
-    fontSize: 24,
-    marginRight: theme.spacing.md,
-    width: 32,
-    textAlign: 'center',
-  },
-  listItemText: {
-    flex: 1,
-  },
-  listItemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.textPrimary,
-    marginBottom: 4,
-  },
-  listItemDescription: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    lineHeight: 20,
-  },
-  listItemArrow: {
-    fontSize: 24,
-    color: theme.colors.textTertiary,
-  },
-  creditsText: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    lineHeight: 24,
+  menuDescription: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   buildInfo: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
-    marginTop: theme.spacing.lg,
+    paddingVertical: 24,
+    marginTop: 8,
   },
   buildInfoText: {
-    fontSize: 14,
-    color: theme.colors.textTertiary,
+    fontSize: 12,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 18,
   },
 });

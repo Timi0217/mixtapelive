@@ -8,33 +8,37 @@ datasource db {
 }
 
 model User {
-  id                   String                    @id @default(cuid())
-  phone                String?                   @unique
-  email                String?                   @unique
-  username             String                    @unique
-  displayName          String                    @map("display_name")
-  bio                  String?                   @db.VarChar(150)
-  profilePhotoUrl      String?                   @map("profile_photo_url")
-  profileEmoji         String?                   @map("profile_emoji")
-  profileBackgroundColor String?                 @map("profile_background_color")
-  accountType          String                    @default("listener") @map("account_type")
-  instagramHandle      String?                   @map("instagram_handle")
-  genreTags            String[]                  @default([]) @map("genre_tags")
-  timezone             String                    @default("UTC")
-  createdAt            DateTime                  @default(now()) @map("created_at")
-  updatedAt            DateTime                  @updatedAt @map("updated_at")
-  broadcastListeners   BroadcastListener[]
-  broadcasts           Broadcast[]
-  curatorBalance       CuratorBalance?
-  followedBy           Follow[]                  @relation("FollowedCurators")
-  following            Follow[]                  @relation("Followers")
-  messages             Message[]
-  pushTokens           PushNotificationToken[]
-  tipsSent             Transaction[]             @relation("TipsSent")
-  tipsReceived         Transaction[]             @relation("TipsReceived")
-  musicAccounts        UserMusicAccount[]
-  musicPreferences     UserMusicPreferences?
-  notificationSettings UserNotificationSettings?
+  id                     String                    @id @default(cuid())
+  phone                  String?                   @unique
+  email                  String?                   @unique
+  username               String                    @unique
+  displayName            String                    @map("display_name")
+  bio                    String?                   @db.VarChar(150)
+  profilePhotoUrl        String?                   @map("profile_photo_url")
+  profileEmoji           String?                   @map("profile_emoji")
+  profileBackgroundColor String?                   @map("profile_background_color")
+  accountType            String                    @default("listener") @map("account_type")
+  instagramHandle        String?                   @map("instagram_handle")
+  genreTags              String[]                  @default([]) @map("genre_tags")
+  timezone               String                    @default("UTC")
+  // Privacy settings
+  privateProfile         Boolean                   @default(false) @map("private_profile")
+  showActivityStatus     Boolean                   @default(true) @map("show_activity_status")
+  allowMessagesFromEveryone Boolean                @default(true) @map("allow_messages_from_everyone")
+  createdAt              DateTime                  @default(now()) @map("created_at")
+  updatedAt              DateTime                  @updatedAt @map("updated_at")
+  broadcastListeners     BroadcastListener[]
+  broadcasts             Broadcast[]
+  curatorBalance         CuratorBalance?
+  followedBy             Follow[]                  @relation("FollowedCurators")
+  following              Follow[]                  @relation("Followers")
+  messages               Message[]
+  pushTokens             PushNotificationToken[]
+  tipsSent               Transaction[]             @relation("TipsSent")
+  tipsReceived           Transaction[]             @relation("TipsReceived")
+  musicAccounts          UserMusicAccount[]
+  musicPreferences       UserMusicPreferences?
+  notificationSettings   UserNotificationSettings?
 
   @@index([phone])
   @@index([email])
