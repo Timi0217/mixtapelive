@@ -1,13 +1,13 @@
 import express from 'express';
 import { prisma } from '../config/database';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
 
 // Get privacy settings
-router.get('/settings', authenticateToken, async (req, res) => {
+router.get('/settings', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -34,9 +34,9 @@ router.get('/settings', authenticateToken, async (req, res) => {
 });
 
 // Update privacy settings
-router.put('/settings', authenticateToken, async (req, res) => {
+router.put('/settings', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     const { privateProfile, showActivityStatus, allowMessagesFromEveryone } = req.body;
 
     const updateData: any = {};
@@ -74,9 +74,9 @@ router.put('/settings', authenticateToken, async (req, res) => {
 });
 
 // Request data export
-router.post('/export-data', authenticateToken, async (req, res) => {
+router.post('/export-data', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
 
     // Get all user data
     const user = await prisma.user.findUnique({
@@ -150,9 +150,9 @@ router.post('/export-data', authenticateToken, async (req, res) => {
 });
 
 // Delete account
-router.delete('/account', authenticateToken, async (req, res) => {
+router.delete('/account', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
 
     // Verify user exists
     const user = await prisma.user.findUnique({
