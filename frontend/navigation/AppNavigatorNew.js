@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -55,6 +55,35 @@ const AppNavigatorNew = () => {
     if (isAuthenticated && navigation) {
       notificationService.setNavigationRef(navigation);
     }
+  }, [isAuthenticated]);
+
+  // Handle deep links
+  useEffect(() => {
+    const handleDeepLink = ({ url }) => {
+      if (!url) return;
+
+      // Handle mixtape://broadcast/:broadcastId
+      const broadcastMatch = url.match(/mixtape:\/\/broadcast\/([a-zA-Z0-9-]+)/);
+      if (broadcastMatch && broadcastMatch[1]) {
+        const broadcastId = broadcastMatch[1];
+        // Navigate to broadcast
+        navigate('Broadcast', { broadcastId });
+      }
+    };
+
+    // Handle initial URL (when app opens from link)
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    // Handle URLs while app is open
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    return () => {
+      subscription?.remove();
+    };
   }, [isAuthenticated]);
 
   if (loading) {

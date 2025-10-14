@@ -18,6 +18,7 @@ import {
   Easing,
   Keyboard,
   TouchableWithoutFeedback,
+  Share,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -341,6 +342,28 @@ const BroadcastScreen = ({ route, navigation }) => {
     }
   };
 
+  const shareBroadcast = async () => {
+    try {
+      const deepLink = `mixtape://broadcast/${broadcastId}`;
+      const webLink = `https://mixtapelive.app/broadcast/${broadcastId}`;
+      const curatorName = broadcast?.curator?.displayName || 'A curator';
+      const caption = broadcast?.caption || 'live broadcast';
+
+      const result = await Share.share({
+        message: `🎵 Join ${curatorName}'s ${caption} on Mixtape!\n\n${webLink}`,
+        url: deepLink,
+        title: `${curatorName} is live on Mixtape`,
+      });
+
+      if (result.action === Share.sharedAction) {
+        console.log('Broadcast shared successfully');
+      }
+    } catch (error) {
+      console.error('Error sharing broadcast:', error);
+      Alert.alert('Error', 'Failed to share broadcast');
+    }
+  };
+
   const playTrackWithCheck = (track) => {
     if (!hasMusicAccount) {
       Alert.alert(
@@ -654,6 +677,14 @@ const BroadcastScreen = ({ route, navigation }) => {
                   <Ionicons name={isPlaying ? "pause" : "play"} size={18} color="#0B0B0B" />
                 </TouchableOpacity>
 
+                <TouchableOpacity
+                  style={[styles.shareButton, { borderColor: surfaceColor, backgroundColor: surfaceColor }]}
+                  onPress={shareBroadcast}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="share-outline" size={18} color="#0B0B0B" />
+                </TouchableOpacity>
+
                 {isSpotifyTrack ? (
                   <TouchableOpacity
                     style={[
@@ -886,6 +917,14 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
   },
   playButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
