@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client';
 import { API_BASE_URL } from './api';
+import toastService from './toastService';
 
 class SocketService {
   constructor() {
@@ -63,6 +64,10 @@ class SocketService {
 
     this.socket.on('error', (error) => {
       console.error('WebSocket error:', error);
+      // Only show toast for rate limit errors (sending messages too fast)
+      if (error?.message && error.message.includes('Slow down')) {
+        toastService.warning(error.message);
+      }
       this.emit('error', error);
     });
 

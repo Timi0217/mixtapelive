@@ -17,7 +17,6 @@ import PrivacySettingsScreen from '../screens/PrivacySettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
 import HelpSupportScreen from '../screens/HelpSupportScreen';
 import PhoneLoginScreen from '../screens/PhoneLoginScreen';
-import LoginScreen from '../screens/LoginScreen';
 import UsernameOnboardingScreen from '../screens/UsernameOnboardingScreen';
 import MusicConnectionScreen from '../screens/MusicConnectionScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';

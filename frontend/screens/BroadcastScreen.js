@@ -117,7 +117,7 @@ const darkenColor = (hex, amount = 0.35) => {
   return `#${rMixed.toString(16).padStart(2, '0')}${gMixed.toString(16).padStart(2, '0')}${bMixed.toString(16).padStart(2, '0')}`;
 };
 
-const renderAvatar = (curator, size = 44) => {
+const renderAvatar = (curator, size = 44, onPress = null) => {
   if (!curator) {
     return null;
   }
@@ -129,23 +129,35 @@ const renderAvatar = (curator, size = 44) => {
     marginRight: theme.spacing.md,
   };
 
-  if (curator.profilePhotoUrl) {
-    return <Image source={{ uri: curator.profilePhotoUrl }} style={[styles.headerAvatar, baseStyle]} />;
-  }
+  const avatarContent = () => {
+    if (curator.profilePhotoUrl) {
+      return <Image source={{ uri: curator.profilePhotoUrl }} style={[styles.headerAvatar, baseStyle]} />;
+    }
 
-  if (curator.profileEmoji && curator.profileBackgroundColor) {
+    if (curator.profileEmoji && curator.profileBackgroundColor) {
+      return (
+        <View style={[styles.headerEmojiAvatar, baseStyle, { backgroundColor: curator.profileBackgroundColor }]}>
+          <Text style={styles.headerEmoji}>{curator.profileEmoji}</Text>
+        </View>
+      );
+    }
+
     return (
-      <View style={[styles.headerEmojiAvatar, baseStyle, { backgroundColor: curator.profileBackgroundColor }]}>
-        <Text style={styles.headerEmoji}>{curator.profileEmoji}</Text>
+      <View style={[styles.curatorInitialAvatar, baseStyle]}>
+        <Text style={styles.curatorInitial}>{curator.displayName?.charAt(0) || '?'}</Text>
       </View>
+    );
+  };
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+        {avatarContent()}
+      </TouchableOpacity>
     );
   }
 
-  return (
-    <View style={[styles.curatorInitialAvatar, baseStyle]}>
-      <Text style={styles.curatorInitial}>{curator.displayName?.charAt(0) || '?'}</Text>
-    </View>
-  );
+  return avatarContent();
 };
 
 const BroadcastScreen = ({ route, navigation }) => {
@@ -529,7 +541,11 @@ const BroadcastScreen = ({ route, navigation }) => {
             <Ionicons name="chevron-back" size={28} color="#fff" />
           </TouchableOpacity>
 
-          {renderAvatar(broadcast?.curator)}
+          {renderAvatar(
+            broadcast?.curator,
+            44,
+            () => navigation.navigate('CuratorProfile', { curatorId: broadcast?.curator?.id })
+          )}
 
           <View style={styles.headerInfo}>
             <Text style={styles.curatorName} numberOfLines={1}>

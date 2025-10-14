@@ -116,17 +116,17 @@ class NotificationService {
         lightColor: '#8B5CF6',
       });
 
-      await Notifications.setNotificationChannelAsync('daily-reminders', {
-        name: 'Daily Reminders',
-        description: 'Reminders to submit your daily song',
+      await Notifications.setNotificationChannelAsync('broadcasts', {
+        name: 'Live Broadcasts',
+        description: 'Notifications when curators start broadcasting',
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#8B5CF6',
       });
 
-      await Notifications.setNotificationChannelAsync('playlist-updates', {
-        name: 'Playlist Updates',
-        description: 'Updates about your group playlists',
+      await Notifications.setNotificationChannelAsync('messages', {
+        name: 'Broadcast Messages',
+        description: 'Messages received during live broadcasts',
         importance: Notifications.AndroidImportance.DEFAULT,
         vibrationPattern: [0, 250],
         lightColor: '#8B5CF6',
@@ -194,14 +194,17 @@ class NotificationService {
           });
         }
         break;
-      case 'submission_reminder':
-        // Navigate to song submission screen
+      case 'new_message':
+        // Navigate to broadcast with message
+        if (data.broadcastId && data.curatorId) {
+          this.navigationRef.navigate('Broadcast', {
+            broadcastId: data.broadcastId,
+            curatorId: data.curatorId,
+          });
+        }
         break;
-      case 'playlist_ready':
-        // Navigate to playlist screen
-        break;
-      case 'group_activity':
-        // Navigate to specific group
+      case 'new_follower':
+        // Navigate to profile
         break;
       default:
         // Default action - maybe open home screen
@@ -273,15 +276,15 @@ class NotificationService {
     );
   }
 
-  async scheduleSubmissionReminder(groupName, hours = 2) {
-    const trigger = new Date(Date.now() + hours * 60 * 60 * 1000);
-    
+  async scheduleBroadcastReminder(curatorName, broadcastId, minutes = 5) {
+    const trigger = new Date(Date.now() + minutes * 60 * 1000);
+
     return this.scheduleLocalNotification(
-      `⏰ Time to submit your song!`,
-      `Don't forget to submit your daily song to ${groupName}. Deadline is at 11 PM!`,
-      { 
-        type: 'submission_reminder',
-        groupName 
+      `🎵 ${curatorName} is going live!`,
+      `Join the broadcast and listen together`,
+      {
+        type: 'broadcast_started',
+        broadcastId
       },
       trigger
     );

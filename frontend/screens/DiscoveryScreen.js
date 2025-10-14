@@ -247,7 +247,7 @@ const DiscoveryScreen = ({ navigation }) => {
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: theme.colors.textPrimary }]}>Discover</Text>
         <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
-          Find new curators to follow
+          Find new broadcasters to listen with
         </Text>
       </View>
 

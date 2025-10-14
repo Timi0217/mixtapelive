@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import notificationService from './services/notificationService';
 import networkService from './services/networkService';
 import OfflineBanner from './components/OfflineBanner';
+import ToastProvider from './components/ToastProvider';
 
 export default function App() {
   useEffect(() => {
@@ -21,9 +22,11 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <OfflineBanner />
-        <AppNavigatorNew />
-        <StatusBar style="auto" />
+        <ToastProvider>
+          <OfflineBanner />
+          <AppNavigatorNew />
+          <StatusBar style="auto" />
+        </ToastProvider>
       </AuthProvider>
     </ThemeProvider>
   );
