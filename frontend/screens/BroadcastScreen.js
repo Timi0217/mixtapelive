@@ -19,6 +19,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Share,
+  Clipboard,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -344,23 +345,39 @@ const BroadcastScreen = ({ route, navigation }) => {
 
   const shareBroadcast = async () => {
     try {
-      const deepLink = `mixtape://broadcast/${broadcastId}`;
       const webLink = `https://mixtapelive.app/broadcast/${broadcastId}`;
       const curatorName = broadcast?.curator?.displayName || 'A curator';
       const caption = broadcast?.caption || 'live broadcast';
+      const shareMessage = `🎵 Join ${curatorName}'s ${caption} on Mixtape!\n\n${webLink}`;
+
+      // Copy link to clipboard first (useful for Instagram Stories)
+      await Clipboard.setStringAsync(webLink);
 
       const result = await Share.share({
-        message: `🎵 Join ${curatorName}'s ${caption} on Mixtape!\n\n${webLink}`,
-        url: deepLink,
+        message: shareMessage,
         title: `${curatorName} is live on Mixtape`,
       });
 
       if (result.action === Share.sharedAction) {
         console.log('Broadcast shared successfully');
+      } else if (result.action === Share.dismissedAction) {
+        // Show helpful message about pasting the link
+        Alert.alert(
+          'Link Copied!',
+          'The broadcast link has been copied to your clipboard. You can paste it in Instagram Stories or any other app.',
+          [{ text: 'Got it' }]
+        );
       }
     } catch (error) {
       console.error('Error sharing broadcast:', error);
-      Alert.alert('Error', 'Failed to share broadcast');
+      // Still copy to clipboard as fallback
+      try {
+        const webLink = `https://mixtapelive.app/broadcast/${broadcastId}`;
+        await Clipboard.setStringAsync(webLink);
+        Alert.alert('Link Copied', 'The broadcast link has been copied to your clipboard.');
+      } catch (clipboardError) {
+        Alert.alert('Error', 'Failed to share broadcast');
+      }
     }
   };
 
