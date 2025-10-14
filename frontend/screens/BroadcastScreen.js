@@ -182,6 +182,8 @@ const BroadcastScreen = ({ route, navigation }) => {
   const chatTranslateY = useRef(new Animated.Value(0)).current;
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasMusicAccount, setHasMusicAccount] = useState(false);
+  const [trackQueue, setTrackQueue] = useState([]);
+  const lastPlayedTrackId = useRef(null);
 
   useEffect(() => {
     loadBroadcast();
@@ -330,9 +332,12 @@ const BroadcastScreen = ({ route, navigation }) => {
   const handleTrackChanged = (track) => {
     setCurrentTrack(track);
 
-    // Auto-play the new track if user is already playing
-    if (isPlaying && track) {
+    // If user is already playing, queue up the new track
+    if (isPlaying && track && track.trackId !== lastPlayedTrackId.current) {
+      // Add to queue and play immediately
+      setTrackQueue(prev => [...prev, track]);
       playTrackWithCheck(track);
+      lastPlayedTrackId.current = track.trackId;
     }
   };
 
@@ -632,8 +637,17 @@ const BroadcastScreen = ({ route, navigation }) => {
                 <TouchableOpacity
                   style={[styles.playButton, { borderColor: surfaceColor, backgroundColor: surfaceColor }]}
                   onPress={() => {
-                    setIsPlaying(true);
-                    playTrackWithCheck(currentTrack);
+                    if (!isPlaying) {
+                      // Start playing - enable auto-queue for future tracks
+                      setIsPlaying(true);
+                      playTrackWithCheck(currentTrack);
+                      lastPlayedTrackId.current = currentTrack?.trackId;
+                      setTrackQueue([currentTrack]);
+                    } else {
+                      // Stop playing - disable auto-queue
+                      setIsPlaying(false);
+                      lastPlayedTrackId.current = null;
+                    }
                   }}
                   activeOpacity={0.85}
                 >
