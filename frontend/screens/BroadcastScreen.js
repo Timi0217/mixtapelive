@@ -180,6 +180,8 @@ const BroadcastScreen = ({ route, navigation }) => {
   const [savedTracks, setSavedTracks] = useState([]);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const chatTranslateY = useRef(new Animated.Value(0)).current;
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasMusicAccount, setHasMusicAccount] = useState(false);
 
   useEffect(() => {
     loadBroadcast();
@@ -272,6 +274,15 @@ const BroadcastScreen = ({ route, navigation }) => {
       const data = await broadcastService.getBroadcast(broadcastId);
       setBroadcast(data);
 
+      // Check if user has music account connected
+      try {
+        const response = await api.get('/music/accounts');
+        setHasMusicAccount(response.data.accounts && response.data.accounts.length > 0);
+      } catch (err) {
+        console.log('Error checking music accounts:', err);
+        setHasMusicAccount(false);
+      }
+
       try {
         const track = await broadcastService.getCurrentlyPlaying(curatorId);
         setCurrentTrack(track);
@@ -318,6 +329,30 @@ const BroadcastScreen = ({ route, navigation }) => {
 
   const handleTrackChanged = (track) => {
     setCurrentTrack(track);
+
+    // Auto-play the new track if user is already playing
+    if (isPlaying && track) {
+      playTrackWithCheck(track);
+    }
+  };
+
+  const playTrackWithCheck = (track) => {
+    if (!hasMusicAccount) {
+      Alert.alert(
+        'Connect Music Account',
+        'Connect your Spotify or Apple Music account to play songs during broadcasts.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Connect',
+            onPress: () => navigation.navigate('MusicConnection')
+          }
+        ]
+      );
+      return;
+    }
+
+    playTrack(track);
   };
 
   const playTrack = (track) => {
@@ -596,10 +631,13 @@ const BroadcastScreen = ({ route, navigation }) => {
               <View style={styles.trackActions}>
                 <TouchableOpacity
                   style={[styles.playButton, { borderColor: surfaceColor, backgroundColor: surfaceColor }]}
-                  onPress={() => playTrack(currentTrack)}
+                  onPress={() => {
+                    setIsPlaying(true);
+                    playTrackWithCheck(currentTrack);
+                  }}
                   activeOpacity={0.85}
                 >
-                  <Ionicons name="play" size={18} color="#0B0B0B" />
+                  <Ionicons name={isPlaying ? "pause" : "play"} size={18} color="#0B0B0B" />
                 </TouchableOpacity>
 
                 {isSpotifyTrack ? (
