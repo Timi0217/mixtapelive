@@ -19,6 +19,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mobilemixtape.app",
+      "buildNumber": "2",
       "usesNonExemptEncryption": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
