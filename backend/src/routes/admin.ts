@@ -760,27 +760,6 @@ router.get('/reset-test-data-now', async (req, res) => {
     // Genre options
     const genres = ['Afrobeats', 'Amapiano', 'House', 'R&B', 'Hip Hop', 'Pop', 'Electronic', 'Indie', 'Rock', 'Jazz'];
 
-    // Create 100 curators for 10 rows in Discovery
-    const curators = [];
-    for (let i = 1; i <= 100; i++) {
-      const curatorInfo = CURATOR_NAMES[i - 1];
-      const curator = await prisma.user.create({
-        data: {
-          phone: `+1555000${String(i).padStart(4, '0')}`,
-          username: curatorInfo.username,
-          displayName: curatorInfo.display,
-          profileEmoji: EMOJIS[i - 1], // Assign in order so they stay consistent
-          profileBackgroundColor: COLORS[i - 1], // Assign in order for distinct colors
-          bio: `${curatorInfo.display} - Music curator`,
-          genreTags: [getRandomElement(genres), getRandomElement(genres)],
-          accountType: 'curator',
-        },
-      });
-      curators.push(curator);
-    }
-
-    console.log(`Created ${curators.length} curators`);
-
     // Get the main user (tmilehin)
     const mainUser = await prisma.user.findUnique({
       where: { username: 'tmilehin' },
@@ -790,9 +769,56 @@ router.get('/reset-test-data-now', async (req, res) => {
       throw new Error('Main user tmilehin not found');
     }
 
-    // Make first 10 curators followed by main user (for Live tab)
-    const followedCurators = curators.slice(0, 10);
-    const unfollowedCurators = curators.slice(10);
+    // Pre-determine which curator indices will be live (32 out of 100)
+    // and which will be followed (10 out of 100)
+    const liveIndices = new Set<number>();
+    const followedIndices = new Set<number>();
+
+    // Pick 10 random indices to be followed
+    while (followedIndices.size < 10) {
+      followedIndices.add(Math.floor(Math.random() * 100));
+    }
+
+    // Pick 32 random indices to be live (can overlap with followed)
+    while (liveIndices.size < 32) {
+      liveIndices.add(Math.floor(Math.random() * 100));
+    }
+
+    console.log(`Will create 100 curators: ${followedIndices.size} followed, ${liveIndices.size} live (scattered)`);
+
+    // Create 100 curators in a SHUFFLED order to scatter live/offline throughout Discovery
+    const curators = [];
+    const shuffledOrder = Array.from({ length: 100 }, (_, i) => i).sort(() => Math.random() - 0.5);
+
+    for (let shuffledIdx = 0; shuffledIdx < 100; shuffledIdx++) {
+      const originalIdx = shuffledOrder[shuffledIdx]; // Use original index for emoji/color consistency
+      const curatorInfo = CURATOR_NAMES[originalIdx];
+
+      const curator = await prisma.user.create({
+        data: {
+          phone: `+1555000${String(shuffledIdx + 1).padStart(4, '0')}`,
+          username: curatorInfo.username,
+          displayName: curatorInfo.display,
+          profileEmoji: EMOJIS[originalIdx], // Use original index for consistency
+          profileBackgroundColor: COLORS[originalIdx], // Use original index for color distribution
+          bio: `${curatorInfo.display} - Music curator`,
+          genreTags: [getRandomElement(genres), getRandomElement(genres)],
+          accountType: 'curator',
+        },
+      });
+
+      // Track if this curator will be followed or live
+      curator.willBeFollowed = followedIndices.has(originalIdx);
+      curator.willBeLive = liveIndices.has(originalIdx);
+
+      curators.push(curator);
+    }
+
+    console.log(`Created ${curators.length} curators in shuffled order`);
+
+    // Follow the curators that were pre-selected
+    const followedCurators = curators.filter(c => c.willBeFollowed);
+    const unfollowedCurators = curators.filter(c => !c.willBeFollowed);
 
     for (const curator of followedCurators) {
       await FollowService.followCurator(mainUser.id, curator.id);
@@ -801,9 +827,10 @@ router.get('/reset-test-data-now', async (req, res) => {
     console.log(`Main user now follows ${followedCurators.length} curators`);
 
     // Create 2nd degree connections (followed curators follow unfollowed curators)
-    // This helps test the "2nd degree" filter in Discovery
-    for (let i = 0; i < 3; i++) {
-      await FollowService.followCurator(followedCurators[i].id, unfollowedCurators[i].id);
+    for (let i = 0; i < 3 && i < unfollowedCurators.length; i++) {
+      if (followedCurators[i]) {
+        await FollowService.followCurator(followedCurators[i].id, unfollowedCurators[i].id);
+      }
     }
 
     console.log('Created 2nd degree connections');
@@ -813,24 +840,20 @@ router.get('/reset-test-data-now', async (req, res) => {
       await prisma.curatorBalance.upsert({
         where: { curatorId: curator.id },
         update: {
-          totalBroadcastHours: Math.floor(Math.random() * 50) + 10, // Random 10-60 hours
+          totalBroadcastHours: Math.floor(Math.random() * 50) + 10,
         },
         create: {
           curatorId: curator.id,
-          totalBroadcastHours: Math.floor(Math.random() * 50) + 10, // Random 10-60 hours
+          totalBroadcastHours: Math.floor(Math.random() * 50) + 10,
         },
       });
     }
 
     console.log('Created curator balances for trending');
 
-    // Create broadcasts scattered throughout all curators (32 random live out of 100)
+    // Create broadcasts for curators that were pre-selected to be live
     const broadcasts = [];
-
-    // Shuffle ALL curators and pick 32 random ones to be live
-    const allCurators = [...followedCurators, ...unfollowedCurators];
-    const shuffledAll = [...allCurators].sort(() => Math.random() - 0.5);
-    const liveCurators = shuffledAll.slice(0, 32); // 32 random curators will be live
+    const liveCurators = curators.filter(c => c.willBeLive);
 
     for (const curator of liveCurators) {
       const track = sampleTracks[broadcasts.length % sampleTracks.length];
