@@ -474,4 +474,169 @@ router.post('/add-album-art-to-live', authenticateToken, requireAdmin, async (re
   }
 });
 
+// Clean up all test data and reseed
+router.post('/reset-test-data', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    console.log('🧹 Cleaning up all test data...');
+
+    // Delete all test broadcasts (status = live or ended)
+    const deletedBroadcasts = await prisma.broadcast.deleteMany({});
+    console.log(`Deleted ${deletedBroadcasts.count} broadcasts`);
+
+    // Delete all test users (phone starts with +1555)
+    const deletedUsers = await prisma.user.deleteMany({
+      where: {
+        phone: {
+          startsWith: '+1555',
+        },
+      },
+    });
+    console.log(`Deleted ${deletedUsers.count} test users`);
+
+    // Clear Redis cache
+    await CacheService.clearAllLiveBroadcasts();
+    console.log('Cleared Redis cache');
+
+    // Now create fresh test data
+    const nova = await prisma.user.findUnique({
+      where: { username: 'tmilehin' },
+    });
+
+    if (!nova) {
+      return res.status(404).json({ error: 'Main user not found' });
+    }
+
+    console.log('🌱 Creating fresh test data...');
+
+    // Create 5 test curators
+    const curators = [];
+    const curatorNames = [
+      { username: 'skylar37', displayName: 'Sarah Rhythms', emoji: '🦁', color: '#10B981' },
+      { username: 'vibemaster', displayName: 'DJ Pulse', emoji: '🎧', color: '#8B5CF6' },
+      { username: 'soundwaves', displayName: 'Wave Rider', emoji: '🌊', color: '#3B82F6' },
+      { username: 'beatdrop', displayName: 'Beat Master', emoji: '🔥', color: '#EF4444' },
+      { username: 'rhythmnation', displayName: 'Rhythm Soul', emoji: '⚡', color: '#F59E0B' },
+    ];
+
+    for (const curator of curatorNames) {
+      const created = await prisma.user.create({
+        data: {
+          phone: `+1555${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+          username: curator.username,
+          displayName: curator.displayName,
+          accountType: 'curator',
+          profileEmoji: curator.emoji,
+          profileBackgroundColor: curator.color,
+          bio: 'Bringing the vibes 🎶',
+          genreTags: [getRandomElement(['Afrobeats', 'Amapiano', 'House', 'R&B', 'Hip Hop'])],
+        },
+      });
+      curators.push(created);
+
+      // Follow this curator
+      await prisma.follow.create({
+        data: {
+          followerUserId: nova.id,
+          curatorUserId: created.id,
+        },
+      });
+    }
+
+    console.log(`Created ${curators.length} curators`);
+
+    // Sample tracks with real album art
+    const sampleTracks = [
+      {
+        trackId: '3n3Ppam7vgaVa1iaRUc9Lp',
+        trackName: 'Mr. Brightside',
+        artistName: 'The Killers',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273ccdddd46119a4ff53eaf1f5d',
+        platform: 'spotify',
+      },
+      {
+        trackId: '0VjIjW4GlUZAMYd2vXMi3b',
+        trackName: 'Blinding Lights',
+        artistName: 'The Weeknd',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36',
+        platform: 'spotify',
+      },
+      {
+        trackId: '2374M0fQpWi3dLnB54qaLX',
+        trackName: 'Animals',
+        artistName: 'Martin Garrix',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273b4a0d69b0ab6e3f1d7c5e9c4',
+        platform: 'spotify',
+      },
+      {
+        trackId: '5ChkMS8OtdzJeqyybCc9R5',
+        trackName: 'Levitating',
+        artistName: 'Dua Lipa',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273be841ba4bc24340152e3a79a',
+        platform: 'spotify',
+      },
+      {
+        trackId: '0DiWol3AO6WpXZgp0goxAV',
+        trackName: 'One Dance',
+        artistName: 'Drake',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273f46b9d202509a8f7384b90de',
+        platform: 'spotify',
+      },
+    ];
+
+    const captions = [
+      'Late night vibes',
+      'House music session',
+      'Afrobeats all day',
+      'Weekend warmup',
+      'Chill session',
+    ];
+
+    // Create live broadcasts for each curator
+    const broadcasts = [];
+    for (let i = 0; i < curators.length; i++) {
+      const broadcast = await prisma.broadcast.create({
+        data: {
+          curatorId: curators[i].id,
+          caption: captions[i],
+          status: 'live',
+          peakListeners: Math.floor(Math.random() * 20) + 5,
+          startedAt: new Date(Date.now() - Math.random() * 3600000),
+          lastHeartbeatAt: new Date(),
+        },
+      });
+      broadcasts.push(broadcast);
+
+      // Set currently playing track
+      const track = sampleTracks[i % sampleTracks.length];
+      await CacheService.setCurrentlyPlaying(curators[i].id, {
+        ...track,
+        startedAt: Date.now(),
+      });
+
+      // Add to live broadcasts cache
+      await CacheService.setActiveBroadcast(curators[i].id, broadcast.id);
+      await CacheService.addLiveBroadcast(broadcast.id, curators[i].id);
+    }
+
+    console.log(`Created ${broadcasts.length} live broadcasts with album art`);
+
+    res.json({
+      success: true,
+      message: 'Successfully reset and reseeded test data',
+      data: {
+        deletedBroadcasts: deletedBroadcasts.count,
+        deletedUsers: deletedUsers.count,
+        createdCurators: curators.length,
+        createdBroadcasts: broadcasts.length,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error resetting test data:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 export default router;
