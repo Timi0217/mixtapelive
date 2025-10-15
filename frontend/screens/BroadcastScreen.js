@@ -414,6 +414,10 @@ const BroadcastScreen = ({ route, navigation }) => {
     }
   };
 
+  // Colors for Instagram story card gradient
+  const topColor = '#8B5CF6';  // Purple
+  const bottomColor = '#EC4899';  // Pink
+
   const shareBroadcast = async () => {
     try {
       const webLink = `https://mixtapelive.app/broadcast/${broadcastId}`;
