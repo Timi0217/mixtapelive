@@ -31,8 +31,8 @@ const requireAdmin = async (req: AuthRequest, res: express.Response, next: expre
   }
 };
 
-// Profile emojis for variety
-const EMOJIS = ['🎵', '🎧', '🎤', '🎸', '🎹', '🎺', '🎷', '🥁', '🎼', '🎶', '💿', '📻', '🔊', '🎚️', '🎛️', '🔥', '⚡', '✨', '💫', '⭐', '🌟', '💎', '👑', '🦁', '🐆', '🦅', '🌊', '🌴', '🏝️', '🌺'];
+// Profile emojis - diverse and random to show personality
+const EMOJIS = ['🌊', '🔥', '⭐', '🌙', '🌸', '🍕', '🎮', '🚀', '🦋', '🌈', '🍒', '🎨', '🏀', '🌵', '🦄', '👾', '🌻', '🍦', '⚡', '🐝', '🌮', '🎪', '🦖', '🍓', '🎯', '🐙', '🌺', '🎭', '🦩', '🍄'];
 
 // Background colors - distinct and diverse
 const COLORS = [
@@ -769,7 +769,7 @@ router.get('/reset-test-data-now', async (req, res) => {
           phone: `+1555000${String(i).padStart(4, '0')}`,
           username: curatorInfo.username,
           displayName: curatorInfo.display,
-          profileEmoji: EMOJIS[i - 1], // Assign in order for variety
+          profileEmoji: getRandomElement(EMOJIS), // Random emoji to show personality
           profileBackgroundColor: COLORS[i - 1], // Assign in order for distinct colors
           bio: `${curatorInfo.display} - Music curator`,
           genreTags: [getRandomElement(genres), getRandomElement(genres)],

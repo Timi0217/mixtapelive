@@ -4,7 +4,7 @@ import { FollowService } from '../services/followService';
 
 const prisma = new PrismaClient();
 
-const EMOJIS = ['🎵', '🎧', '🎤', '🎸', '🎹', '🎺', '🎷', '🥁', '🎼', '🎶', '💿', '📻', '🔊', '🎚️', '🎛️', '🔥', '⚡', '✨', '💫', '⭐', '🌟', '💎', '👑', '🦁', '🐆', '🦅', '🌊', '🌴', '🏝️', '🌺'];
+const EMOJIS = ['🌊', '🔥', '⭐', '🌙', '🌸', '🍕', '🎮', '🚀', '🦋', '🌈', '🍒', '🎨', '🏀', '🌵', '🦄', '👾', '🌻', '🍦', '⚡', '🐝', '🌮', '🎪', '🦖', '🍓', '🎯', '🐙', '🌺', '🎭', '🦩', '🍄'];
 
 const COLORS = [
   '#EF4444', // Red
@@ -109,7 +109,7 @@ async function main() {
         phone: `+1555000${String(i).padStart(4, '0')}`,
         username: `curator${i}`,
         displayName: `Curator ${i}`,
-        profileEmoji: EMOJIS[i - 1], // Assign in order for variety
+        profileEmoji: getRandomElement(EMOJIS), // Random emoji to show personality
         profileBackgroundColor: COLORS[i - 1], // Assign in order for distinct colors
         bio: `Curator ${i} - Music lover`,
         genreTags: [getRandomElement(genres), getRandomElement(genres)],
