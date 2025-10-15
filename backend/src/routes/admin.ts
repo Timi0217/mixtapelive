@@ -769,8 +769,12 @@ router.get('/reset-test-data-now', async (req, res) => {
 
     // Create curator balances for trending filter
     for (const curator of unfollowedCurators) {
-      await prisma.curatorBalance.create({
-        data: {
+      await prisma.curatorBalance.upsert({
+        where: { curatorId: curator.id },
+        update: {
+          totalBroadcastHours: Math.floor(Math.random() * 50) + 10, // Random 10-60 hours
+        },
+        create: {
           curatorId: curator.id,
           totalBroadcastHours: Math.floor(Math.random() * 50) + 10, // Random 10-60 hours
         },

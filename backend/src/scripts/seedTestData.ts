@@ -133,8 +133,12 @@ async function main() {
 
   // Create curator balances for trending filter
   for (const curator of unfollowedCurators) {
-    await prisma.curatorBalance.create({
-      data: {
+    await prisma.curatorBalance.upsert({
+      where: { curatorId: curator.id },
+      update: {
+        totalBroadcastHours: Math.floor(Math.random() * 50) + 10,
+      },
+      create: {
         curatorId: curator.id,
         totalBroadcastHours: Math.floor(Math.random() * 50) + 10,
       },
