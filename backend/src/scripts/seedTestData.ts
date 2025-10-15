@@ -34,8 +34,11 @@ async function main() {
   });
   console.log(`Deleted ${deletedUsers.count} test users`);
 
-  // Clear Redis cache
-  await CacheService.clearAllLiveBroadcasts();
+  // Clear Redis cache - delete all live broadcasts
+  const liveBroadcasts = await CacheService.getLiveBroadcasts();
+  for (const broadcastId of liveBroadcasts) {
+    await CacheService.removeLiveBroadcast(broadcastId);
+  }
   console.log('Cleared Redis cache');
 
   console.log('🌱 Creating comprehensive test data...');
@@ -116,14 +119,14 @@ async function main() {
   const unfollowedCurators = curators.slice(10);
 
   for (const curator of followedCurators) {
-    await FollowService.followUser(mainUser.id, curator.id);
+    await FollowService.followCurator(mainUser.id, curator.id);
   }
 
   console.log(`✅ Main user now follows ${followedCurators.length} curators`);
 
   // Create 2nd degree connections (followed curators follow unfollowed curators)
   for (let i = 0; i < 3; i++) {
-    await FollowService.followUser(followedCurators[i].id, unfollowedCurators[i].id);
+    await FollowService.followCurator(followedCurators[i].id, unfollowedCurators[i].id);
   }
 
   console.log('✅ Created 2nd degree connections');

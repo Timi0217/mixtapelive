@@ -494,7 +494,10 @@ router.post('/reset-test-data', authenticateToken, requireAdmin, async (req: Aut
     console.log(`Deleted ${deletedUsers.count} test users`);
 
     // Clear Redis cache
-    await CacheService.clearAllLiveBroadcasts();
+    const liveBroadcasts = await CacheService.getLiveBroadcasts();
+    for (const broadcastId of liveBroadcasts) {
+      await CacheService.removeLiveBroadcast(broadcastId);
+    }
     console.log('Cleared Redis cache');
 
     // Now create fresh test data
@@ -665,7 +668,10 @@ router.get('/reset-test-data-now', async (req, res) => {
     console.log(`Deleted ${deletedUsers.count} test users`);
 
     // Clear Redis cache
-    await CacheService.clearAllLiveBroadcasts();
+    const liveBroadcasts = await CacheService.getLiveBroadcasts();
+    for (const broadcastId of liveBroadcasts) {
+      await CacheService.removeLiveBroadcast(broadcastId);
+    }
     console.log('Cleared Redis cache');
 
     console.log('🌱 Creating comprehensive test data...');
@@ -746,7 +752,7 @@ router.get('/reset-test-data-now', async (req, res) => {
     const unfollowedCurators = curators.slice(10);
 
     for (const curator of followedCurators) {
-      await FollowService.followUser(mainUser.id, curator.id);
+      await FollowService.followCurator(mainUser.id, curator.id);
     }
 
     console.log(`Main user now follows ${followedCurators.length} curators`);
@@ -754,7 +760,7 @@ router.get('/reset-test-data-now', async (req, res) => {
     // Create 2nd degree connections (followed curators follow unfollowed curators)
     // This helps test the "2nd degree" filter in Discovery
     for (let i = 0; i < 3; i++) {
-      await FollowService.followUser(followedCurators[i].id, unfollowedCurators[i].id);
+      await FollowService.followCurator(followedCurators[i].id, unfollowedCurators[i].id);
     }
 
     console.log('Created 2nd degree connections');
