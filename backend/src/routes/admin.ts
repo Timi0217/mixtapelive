@@ -821,13 +821,20 @@ router.get('/reset-test-data-now', async (req, res) => {
       await CacheService.addLiveBroadcast(broadcast.id, curator.id);
 
       // Set currently playing track with album art (with extended TTL for demo)
-      const key = `curator:${curator.id}:now-playing`;
-      const trackData = {
-        ...track,
-        startedAt: Date.now(),
-      };
-      await CacheService.set(key, JSON.stringify(trackData), 3600); // 1 hour TTL for demo data
-      console.log(`✅ Set track for ${curator.username}:`, track.trackName, '| Album:', track.albumArtUrl?.substring(0, 50));
+      try {
+        const key = `curator:${curator.id}:now-playing`;
+        const trackData = {
+          ...track,
+          startedAt: Date.now(),
+        };
+        await CacheService.set(key, JSON.stringify(trackData), 3600); // 1 hour TTL for demo data
+
+        // Verify it was saved
+        const verify = await CacheService.get(key);
+        console.log(`✅ ${curator.username}: ${track.trackName} | Saved: ${!!verify}`);
+      } catch (err) {
+        console.error(`❌ Failed ${curator.username}:`, err);
+      }
 
       broadcasts.push(broadcast);
     }
@@ -851,13 +858,20 @@ router.get('/reset-test-data-now', async (req, res) => {
       await CacheService.addLiveBroadcast(broadcast.id, curator.id);
 
       // Set currently playing track with album art (with extended TTL for demo)
-      const key = `curator:${curator.id}:now-playing`;
-      const trackData = {
-        ...track,
-        startedAt: Date.now(),
-      };
-      await CacheService.set(key, JSON.stringify(trackData), 3600); // 1 hour TTL for demo data
-      console.log(`✅ Set track for ${curator.username}:`, track.trackName, '| Album:', track.albumArtUrl?.substring(0, 50));
+      try {
+        const key = `curator:${curator.id}:now-playing`;
+        const trackData = {
+          ...track,
+          startedAt: Date.now(),
+        };
+        await CacheService.set(key, JSON.stringify(trackData), 3600); // 1 hour TTL for demo data
+
+        // Verify it was saved
+        const verify = await CacheService.get(key);
+        console.log(`✅ ${curator.username}: ${track.trackName} | Saved: ${!!verify}`);
+      } catch (err) {
+        console.error(`❌ Failed ${curator.username}:`, err);
+      }
 
       broadcasts.push(broadcast);
     }
