@@ -824,11 +824,11 @@ router.get('/reset-test-data-now', async (req, res) => {
 
     console.log('Created curator balances for trending');
 
-    // Create 15 live broadcasts (10 from followed, 5 from unfollowed)
+    // Create 12 live broadcasts (7 from followed, 5 from unfollowed) - leaves 3 followed offline
     const broadcasts = [];
 
-    // 10 broadcasts from followed curators
-    for (let i = 0; i < 10; i++) {
+    // 7 broadcasts from followed curators (leaving 3 offline for variety)
+    for (let i = 0; i < 7; i++) {
       const curator = followedCurators[i];
       const track = sampleTracks[i % sampleTracks.length];
 
