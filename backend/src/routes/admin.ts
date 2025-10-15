@@ -58,6 +58,30 @@ const COLORS = [
   '#60A5FA', // Light Blue
 ];
 
+// Real curator names and usernames
+const CURATOR_NAMES = [
+  { display: 'DJ Nova', username: 'djnova' },
+  { display: 'Luna Beats', username: 'lunabeats' },
+  { display: 'Echo Sound', username: 'echosound' },
+  { display: 'Rhythm King', username: 'rhythmking' },
+  { display: 'Melody Star', username: 'melodystar' },
+  { display: 'Bass Master', username: 'bassmaster' },
+  { display: 'Wave Rider', username: 'waverider' },
+  { display: 'Sonic Bloom', username: 'sonicbloom' },
+  { display: 'Vibe Chief', username: 'vibechief' },
+  { display: 'Beat Sage', username: 'beatsage' },
+  { display: 'Soul Spinner', username: 'soulspinner' },
+  { display: 'Track Lord', username: 'tracklord' },
+  { display: 'Mix Maven', username: 'mixmaven' },
+  { display: 'Drop Zone', username: 'dropzone' },
+  { display: 'Groove Pilot', username: 'groovepilot' },
+  { display: 'Sound Wave', username: 'soundwave' },
+  { display: 'Tempo Titan', username: 'tempotitan' },
+  { display: 'Harmony Hub', username: 'harmonyhub' },
+  { display: 'Pulse Point', username: 'pulsepoint' },
+  { display: 'Beat Breaker', username: 'beatbreaker' },
+];
+
 function getRandomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
 }
@@ -739,14 +763,15 @@ router.get('/reset-test-data-now', async (req, res) => {
     // Create 20 curators with variety
     const curators = [];
     for (let i = 1; i <= 20; i++) {
+      const curatorInfo = CURATOR_NAMES[i - 1];
       const curator = await prisma.user.create({
         data: {
           phone: `+1555000${String(i).padStart(4, '0')}`,
-          username: `curator${i}`,
-          displayName: `Curator ${i}`,
+          username: curatorInfo.username,
+          displayName: curatorInfo.display,
           profileEmoji: EMOJIS[i - 1], // Assign in order for variety
           profileBackgroundColor: COLORS[i - 1], // Assign in order for distinct colors
-          bio: `Curator ${i} - Music lover`,
+          bio: `${curatorInfo.display} - Music curator`,
           genreTags: [getRandomElement(genres), getRandomElement(genres)],
           accountType: 'curator',
         },
@@ -812,7 +837,7 @@ router.get('/reset-test-data-now', async (req, res) => {
           curatorId: curator.id,
           status: 'live',
           caption: `${curator.displayName}'s vibes`,
-          lastHeartbeatAt: new Date(),
+          lastHeartbeatAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Set to 24 hours in future to prevent auto-cleanup
         },
       });
 
@@ -849,7 +874,7 @@ router.get('/reset-test-data-now', async (req, res) => {
           curatorId: curator.id,
           status: 'live',
           caption: `${curator.displayName}'s session`,
-          lastHeartbeatAt: new Date(),
+          lastHeartbeatAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Set to 24 hours in future to prevent auto-cleanup
         },
       });
 
