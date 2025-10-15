@@ -639,17 +639,13 @@ router.post('/reset-test-data', authenticateToken, requireAdmin, async (req: Aut
   }
 });
 
-// Temporary endpoint without admin check (remove after use!)
-router.post('/reset-test-data-temp', authenticateToken, async (req: AuthRequest, res) => {
+// Temporary endpoint - accessible via secret key (remove after use!)
+router.get('/reset-test-data-now', async (req, res) => {
   try {
-    // Only allow tmilehin to use this
-    const user = await prisma.user.findUnique({
-      where: { id: req.user!.id },
-      select: { username: true },
-    });
-
-    if (user?.username !== 'tmilehin') {
-      return res.status(403).json({ error: 'Unauthorized' });
+    // Simple secret key check
+    const secret = req.query.secret;
+    if (secret !== 'mixtape2025') {
+      return res.status(403).json({ error: 'Invalid secret' });
     }
 
     console.log('🧹 Cleaning up all test data...');
