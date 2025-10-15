@@ -19,13 +19,17 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mobilemixtape.app",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "usesNonExemptEncryption": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSUserNotificationsUsageDescription": "This app uses notifications to alert you when curators you follow start broadcasting and when you receive messages during live broadcasts.",
         "NSMicrophoneUsageDescription": "This app may need microphone access for music recognition features with Apple Music.",
         "NSCameraUsageDescription": "This app may use camera access for profile pictures or group photos in future updates.",
+        "LSApplicationQueriesSchemes": [
+          "instagram",
+          "instagram-stories"
+        ],
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": false,
           "NSExceptionDomains": {

@@ -198,12 +198,36 @@ router.post(
     try {
       const { trackUri } = req.body;
 
+      console.log('🎵 Play request:', { userId: req.user!.id, trackUri });
       await musicService.playSpotifyTrack(req.user!.id, trackUri);
 
       res.json({ success: true });
     } catch (error: any) {
-      console.error('Spotify playback error:', error);
+      console.error('Spotify playback error:', error.message, error.response?.data);
       res.status(400).json({ error: error.message || 'Failed to start playback. Make sure Spotify is open and active on one of your devices.' });
+    }
+  }
+);
+
+// Add track to Spotify queue
+router.post(
+  '/spotify/queue',
+  authenticateToken,
+  [
+    body('trackUri').isString().notEmpty(),
+  ],
+  validateRequest,
+  async (req: AuthRequest, res) => {
+    try {
+      const { trackUri } = req.body;
+
+      console.log('🎵 Queue request:', { userId: req.user!.id, trackUri });
+      await musicService.addToSpotifyQueue(req.user!.id, trackUri);
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Spotify queue error:', error.message, error.response?.data);
+      res.status(400).json({ error: error.message || 'Failed to add to queue. Make sure Spotify is open and playing.' });
     }
   }
 );

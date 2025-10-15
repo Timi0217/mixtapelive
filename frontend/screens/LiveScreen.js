@@ -107,6 +107,7 @@ const LiveScreen = ({ navigation }) => {
   const [captionError, setCaptionError] = useState('');
   const [savingTrackId, setSavingTrackId] = useState(null);
   const [savedTracks, setSavedTracks] = useState([]);
+  const [inactivityWarning, setInactivityWarning] = useState(false);
 
   const ownLiveBroadcast = useMemo(() => {
     if (!userId) {
@@ -172,17 +173,36 @@ const LiveScreen = ({ navigation }) => {
     }));
   }, []);
 
+  const handleInactivityWarning = useCallback((data) => {
+    console.log('⚠️ Inactivity warning received:', data);
+    setInactivityWarning(true);
+
+    // Auto-hide warning after 10 seconds
+    setTimeout(() => {
+      setInactivityWarning(false);
+    }, 10000);
+
+    // Show alert to broadcaster
+    Alert.alert(
+      '⚠️ Inactivity Warning',
+      data.message || 'Your broadcast will end in 1 minute due to inactivity. Change tracks to keep it alive.',
+      [{ text: 'Got it' }]
+    );
+  }, []);
+
   useEffect(() => {
     const unsubscribeStarted = socketService.on('broadcastStarted', handleBroadcastStarted);
     const unsubscribeEnded = socketService.on('broadcastEnded', handleBroadcastEnded);
     const unsubscribeTrackUpdated = socketService.on('broadcast-track-updated', handleBroadcastTrackUpdated);
+    const unsubscribeInactivityWarning = socketService.on('inactivityWarning', handleInactivityWarning);
 
     return () => {
       unsubscribeStarted();
       unsubscribeEnded();
       unsubscribeTrackUpdated();
+      unsubscribeInactivityWarning();
     };
-  }, [handleBroadcastStarted, handleBroadcastEnded, handleBroadcastTrackUpdated]);
+  }, [handleBroadcastStarted, handleBroadcastEnded, handleBroadcastTrackUpdated, handleInactivityWarning]);
 
   // Load saved tracks from AsyncStorage
   useEffect(() => {
@@ -296,6 +316,16 @@ const LiveScreen = ({ navigation }) => {
 
     if (activeBroadcastId && String(data.broadcastId) === String(activeBroadcastId)) {
       setMyBroadcastStatus({ isLive: false, broadcastId: null });
+      setInactivityWarning(false);
+
+      // Show appropriate message based on reason
+      if (data.reason === 'inactivity') {
+        Alert.alert(
+          'Broadcast Ended',
+          data.message || 'Your broadcast was ended due to inactivity.',
+          [{ text: 'OK' }]
+        );
+      }
     }
   }, [activeBroadcastId]);
 
@@ -859,12 +889,20 @@ const LiveScreen = ({ navigation }) => {
         ) : (
           <Text style={[styles.headerTitle, { color: theme.colors.textPrimary }]}>Live</Text>
         )}
-        {isUserLive && (
+        {isUserLive && !inactivityWarning && (
           <Text
             style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}
           >
             You are broadcasting now
           </Text>
+        )}
+        {isUserLive && inactivityWarning && (
+          <View style={styles.warningBanner}>
+            <Ionicons name="warning" size={16} color="#FF9500" />
+            <Text style={styles.warningText}>
+              Ending in 1 min - Change tracks to stay live
+            </Text>
+          </View>
         )}
       </View>
 
@@ -972,6 +1010,21 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     maxWidth: '85%',
     marginTop: 12,
+  },
+  warningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 149, 0, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 12,
+    gap: 8,
+  },
+  warningText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FF9500',
   },
 
   // List

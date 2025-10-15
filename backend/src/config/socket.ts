@@ -220,16 +220,18 @@ export class WebSocketServer {
       }
     }, 3000); // 3 seconds for faster music updates
 
-    // DISABLED: Auto-cleanup of inactive broadcasts
-    // Test broadcasts should stay live until manually stopped
-    // Re-enable when ready for production heartbeat monitoring
-    // setInterval(async () => {
-    //   try {
-    //     await BroadcastService.cleanupInactiveBroadcasts();
-    //   } catch (error) {
-    //     console.error('Error cleaning up inactive broadcasts:', error);
-    //   }
-    // }, 60000); // 1 minute
+    // Auto-cleanup of inactive broadcasts (15 min timeout, 1 min warning)
+    setInterval(async () => {
+      try {
+        // Send warnings at 14 minutes of inactivity
+        await BroadcastService.sendInactivityWarnings(this.io);
+
+        // Auto-stop at 15 minutes of inactivity
+        await BroadcastService.cleanupInactiveBroadcasts(this.io);
+      } catch (error) {
+        console.error('Error in inactivity cleanup:', error);
+      }
+    }, 30000); // Check every 30 seconds for better accuracy
   }
 
   // Emit broadcast started event

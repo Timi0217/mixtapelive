@@ -19,12 +19,14 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Share,
-  Clipboard,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import { captureRef } from 'react-native-view-shot';
 import { useAuth } from '../context/AuthContext';
 import socketService from '../services/socketService';
 import broadcastService from '../services/broadcastService';
@@ -186,6 +188,7 @@ const BroadcastScreen = ({ route, navigation }) => {
   const [hasMusicAccount, setHasMusicAccount] = useState(false);
   const [trackQueue, setTrackQueue] = useState([]);
   const lastPlayedTrackId = useRef(null);
+  const storyCardRef = useRef(null);
 
   useEffect(() => {
     loadBroadcast();
@@ -334,12 +337,80 @@ const BroadcastScreen = ({ route, navigation }) => {
   const handleTrackChanged = (track) => {
     setCurrentTrack(track);
 
-    // If user is already playing, queue up the new track
+    // If user is already playing, add new track to queue
     if (isPlaying && track && track.trackId !== lastPlayedTrackId.current) {
-      // Add to queue and play immediately
       setTrackQueue(prev => [...prev, track]);
-      playTrackWithCheck(track);
+      addTrackToQueue(track);
       lastPlayedTrackId.current = track.trackId;
+    }
+  };
+
+  const shareToInstagramStory = async () => {
+    try {
+      const webLink = `https://mixtapelive.app/broadcast/${broadcastId}`;
+
+      // Copy link to clipboard automatically
+      await Clipboard.setStringAsync(webLink);
+
+      // Check if Instagram is installed
+      const canOpen = await Linking.canOpenURL('instagram://');
+
+      if (!canOpen) {
+        Alert.alert(
+          'Instagram Not Found',
+          'Please install Instagram to share to Stories.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Capture the story card view as an image
+      if (storyCardRef.current) {
+        const imageUri = await captureRef(storyCardRef, {
+          format: 'jpg',
+          quality: 1.0,
+        });
+
+        console.log('✅ Captured story card:', imageUri);
+
+        // Copy image to clipboard for Instagram to pick up
+        await Clipboard.setImageAsync(imageUri);
+
+        // Open Instagram Stories
+        await Linking.openURL('instagram-stories://share?source_application=com.mobilemixtape.app');
+
+        console.log('✅ Opened Instagram for story sharing');
+
+        // Show success message
+        setTimeout(() => {
+          Alert.alert(
+            '📸 Story Card Ready!',
+            `Your broadcast card is ready in Instagram!\n\nLink copied - paste it to let people join.`,
+            [{ text: 'Got it' }]
+          );
+        }, 1000);
+      } else {
+        throw new Error('Story card not available');
+      }
+
+    } catch (error) {
+      console.error('Error sharing to Instagram Story:', error);
+
+      // Fallback: open story camera with link copied
+      try {
+        await Linking.openURL('instagram://story-camera');
+        Alert.alert(
+          'Link Copied!',
+          'The broadcast link has been copied. Paste it in your Instagram story.',
+          [{ text: 'OK' }]
+        );
+      } catch (fallbackError) {
+        Alert.alert(
+          'Link Copied!',
+          'The broadcast link has been copied to your clipboard. Open Instagram and paste it in your story.',
+          [{ text: 'OK' }]
+        );
+      }
     }
   };
 
@@ -353,21 +424,37 @@ const BroadcastScreen = ({ route, navigation }) => {
       // Copy link to clipboard first (useful for Instagram Stories)
       await Clipboard.setStringAsync(webLink);
 
-      const result = await Share.share({
-        message: shareMessage,
-        title: `${curatorName} is live on Mixtape`,
-      });
-
-      if (result.action === Share.sharedAction) {
-        console.log('Broadcast shared successfully');
-      } else if (result.action === Share.dismissedAction) {
-        // Show helpful message about pasting the link
-        Alert.alert(
-          'Link Copied!',
-          'The broadcast link has been copied to your clipboard. You can paste it in Instagram Stories or any other app.',
-          [{ text: 'Got it' }]
-        );
-      }
+      // Show action sheet for sharing options
+      Alert.alert(
+        'Share Broadcast',
+        'Choose how to share this broadcast',
+        [
+          {
+            text: 'Instagram Story',
+            onPress: () => shareToInstagramStory(),
+          },
+          {
+            text: 'Share Link',
+            onPress: async () => {
+              const result = await Share.share({
+                message: shareMessage,
+                title: `${curatorName} is live on Mixtape`,
+              });
+              if (result.action === Share.dismissedAction) {
+                Alert.alert(
+                  'Link Copied!',
+                  'The broadcast link has been copied to your clipboard.',
+                  [{ text: 'Got it' }]
+                );
+              }
+            },
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+        ]
+      );
     } catch (error) {
       console.error('Error sharing broadcast:', error);
       // Still copy to clipboard as fallback
@@ -400,26 +487,50 @@ const BroadcastScreen = ({ route, navigation }) => {
     playTrack(track);
   };
 
-  const playTrack = (track) => {
+  const playTrack = async (track) => {
     if (!track) return;
 
-    let url;
-    if (track.platform === 'spotify') {
-      url = `spotify:track:${track.trackId}`;
-    } else if (track.platform === 'apple-music') {
-      url = `https://music.apple.com/us/song/${track.trackId}`;
-    }
+    try {
+      // Open the music app directly to play the track (first play only)
+      let url;
+      if (track.platform === 'spotify') {
+        url = `spotify:track:${track.trackId}`;
+      } else if (track.platform === 'apple-music') {
+        url = `https://music.apple.com/us/song/${track.trackId}`;
+      }
 
-    if (url) {
-      Linking.openURL(url)
-        .then(() => {
-          if (typeof onStartListening === 'function') {
-            onStartListening(broadcastId);
-          }
-        })
-        .catch(() => {
-          Alert.alert('Error', `Please make sure ${track.platform === 'spotify' ? 'Spotify' : 'Apple Music'} is installed`);
+      if (url) {
+        await Linking.openURL(url);
+
+        // Mark as listening
+        if (typeof onStartListening === 'function') {
+          onStartListening(broadcastId);
+        }
+      }
+    } catch (error) {
+      console.error('Error opening music app:', error);
+      Alert.alert('Error', `Please make sure ${track.platform === 'spotify' ? 'Spotify' : 'Apple Music'} is installed`);
+    }
+  };
+
+  const addTrackToQueue = async (track) => {
+    if (!track) return;
+
+    try {
+      // Use API to add to queue (doesn't interrupt current playback)
+      if (track.platform === 'spotify') {
+        await api.post('/music/spotify/queue', {
+          trackUri: `spotify:track:${track.trackId}`
         });
+        console.log('✅ Added to Spotify queue:', track.trackName);
+      } else if (track.platform === 'apple-music') {
+        // Apple Music doesn't have a queue API, fall back to deep link
+        const url = `https://music.apple.com/us/song/${track.trackId}`;
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.error('Error adding to queue:', error.response?.data || error.message || error);
+      // Silently fail - don't interrupt the listening experience
     }
   };
 
@@ -694,15 +805,7 @@ const BroadcastScreen = ({ route, navigation }) => {
                   <Ionicons name={isPlaying ? "pause" : "play"} size={18} color="#0B0B0B" />
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.shareButton, { borderColor: surfaceColor, backgroundColor: surfaceColor }]}
-                  onPress={shareBroadcast}
-                  activeOpacity={0.85}
-                >
-                  <Ionicons name="share-outline" size={18} color="#0B0B0B" />
-                </TouchableOpacity>
-
-                {isSpotifyTrack ? (
+                {isSpotifyTrack && (
                   <TouchableOpacity
                     style={[
                       styles.addToLibraryButton,
@@ -723,7 +826,15 @@ const BroadcastScreen = ({ route, navigation }) => {
                       <Text style={styles.addToLibraryText}>+</Text>
                     )}
                   </TouchableOpacity>
-                ) : null}
+                )}
+
+                <TouchableOpacity
+                  style={[styles.shareButton, { borderColor: surfaceColor, backgroundColor: surfaceColor }]}
+                  onPress={shareBroadcast}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="share-outline" size={18} color="#0B0B0B" />
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -796,6 +907,61 @@ const BroadcastScreen = ({ route, navigation }) => {
         </BlurView>
         </Animated.View>
       </Animated.View>
+
+      {/* Hidden Story Card for Instagram Sharing */}
+      <View style={styles.hiddenStoryCard} collapsable={false}>
+        <View ref={storyCardRef} collapsable={false} style={styles.storyCardContainer}>
+          <LinearGradient
+            colors={[topColor, bottomColor]}
+            style={styles.storyCardGradient}
+          >
+            {/* Caption at top */}
+            <View style={styles.storyCardHeader}>
+              <View style={styles.liveDotStory} />
+              <Text style={styles.storyCardCaption}>{broadcast?.caption || 'yuhhh'}</Text>
+            </View>
+
+            {/* Curator info */}
+            <View style={styles.storyCardCurator}>
+              {renderAvatar(broadcast?.curator, 80)}
+              <Text style={styles.storyCardCuratorName}>
+                {broadcast?.curator?.displayName}
+              </Text>
+              <Text style={styles.storyCardUsername}>
+                @{broadcast?.curator?.username}
+              </Text>
+            </View>
+
+            {/* Current track */}
+            {currentTrack && (
+              <View style={styles.storyCardTrack}>
+                {currentTrack.albumArtUrl && (
+                  <Image
+                    source={{ uri: currentTrack.albumArtUrl }}
+                    style={styles.storyCardAlbumArt}
+                  />
+                )}
+                <View style={styles.storyCardTrackInfo}>
+                  <Text style={styles.storyCardTrackName} numberOfLines={1}>
+                    {currentTrack.trackName}
+                  </Text>
+                  <Text style={styles.storyCardArtistName} numberOfLines={1}>
+                    {currentTrack.artistName}
+                  </Text>
+                </View>
+                <TouchableOpacity style={styles.storyCardPlayButton}>
+                  <Ionicons name="play" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* CTA Button */}
+            <View style={styles.storyCardCTA}>
+              <Text style={styles.storyCardCTAText}>VIEW CHANNEL</Text>
+            </View>
+          </LinearGradient>
+        </View>
+      </View>
     </View>
   );
 };
@@ -1161,6 +1327,106 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     fontSize: 20,
     fontWeight: '700',
+  },
+
+  // Hidden Story Card Styles
+  hiddenStoryCard: {
+    position: 'absolute',
+    left: -10000, // Off-screen
+    top: 0,
+    width: 1080, // Instagram story dimensions
+    height: 1920,
+  },
+  storyCardContainer: {
+    width: 1080,
+    height: 1920,
+    backgroundColor: '#000',
+  },
+  storyCardGradient: {
+    flex: 1,
+    padding: 60,
+    justifyContent: 'space-between',
+  },
+  storyCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  liveDotStory: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#FF3B30',
+  },
+  storyCardCaption: {
+    fontSize: 32,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  storyCardCurator: {
+    alignItems: 'center',
+    marginTop: 100,
+  },
+  storyCardCuratorName: {
+    fontSize: 56,
+    fontWeight: '700',
+    color: '#fff',
+    marginTop: 24,
+  },
+  storyCardUsername: {
+    fontSize: 40,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 8,
+  },
+  storyCardTrack: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 32,
+    padding: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 60,
+    gap: 24,
+  },
+  storyCardAlbumArt: {
+    width: 120,
+    height: 120,
+    borderRadius: 16,
+  },
+  storyCardTrackInfo: {
+    flex: 1,
+  },
+  storyCardTrackName: {
+    fontSize: 36,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  storyCardArtistName: {
+    fontSize: 28,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 8,
+  },
+  storyCardPlayButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(139, 92, 246, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  storyCardCTA: {
+    backgroundColor: 'rgba(139, 92, 246, 0.9)',
+    borderRadius: 32,
+    paddingVertical: 32,
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  storyCardCTAText: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 2,
   },
 });
 

@@ -376,21 +376,55 @@ export class BroadcastService {
     return { isLive: false };
   }
 
-  // Auto-stop broadcasts that have been inactive for too long
-  static async cleanupInactiveBroadcasts(): Promise<void> {
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  // Send warning to broadcasters who are approaching inactivity timeout
+  static async sendInactivityWarnings(io: any): Promise<void> {
+    const fourteenMinutesAgo = new Date(Date.now() - 14 * 60 * 1000);
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+
+    // Find broadcasts that are at 14 minutes of inactivity (1 minute warning)
+    const warningBroadcasts = await prisma.broadcast.findMany({
+      where: {
+        status: 'live',
+        lastHeartbeatAt: {
+          lt: fourteenMinutesAgo,
+          gte: fifteenMinutesAgo, // Between 14 and 15 minutes ago
+        },
+      },
+    });
+
+    for (const broadcast of warningBroadcasts) {
+      console.log(`⚠️ Sending inactivity warning to broadcast: ${broadcast.id}`);
+
+      // Send warning to the curator via WebSocket
+      io.to(`broadcast:${broadcast.id}`).emit('inactivityWarning', {
+        message: 'Your broadcast will end in 1 minute due to inactivity. Change tracks to keep it alive.',
+        secondsRemaining: 60,
+      });
+    }
+  }
+
+  // Auto-stop broadcasts that have been inactive for too long (15 minutes)
+  static async cleanupInactiveBroadcasts(io: any): Promise<void> {
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
     const inactiveBroadcasts = await prisma.broadcast.findMany({
       where: {
         status: 'live',
         lastHeartbeatAt: {
-          lt: fiveMinutesAgo,
+          lt: fifteenMinutesAgo,
         },
       },
     });
 
     for (const broadcast of inactiveBroadcasts) {
-      console.log(`Auto-stopping inactive broadcast: ${broadcast.id}`);
+      console.log(`🛑 Auto-stopping inactive broadcast: ${broadcast.id}`);
+
+      // Notify all listeners and curator that broadcast is ending
+      io.to(`broadcast:${broadcast.id}`).emit('broadcastEnded', {
+        reason: 'inactivity',
+        message: 'Broadcast ended due to inactivity',
+      });
+
       await this.stopBroadcast(broadcast.id, broadcast.curatorId);
     }
   }

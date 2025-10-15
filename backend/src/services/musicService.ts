@@ -669,6 +669,74 @@ class MusicService {
     }
   }
 
+  async addToSpotifyQueue(userId: string, trackUri: string): Promise<void> {
+    if (!trackUri) {
+      throw new Error('Track URI is required');
+    }
+
+    const musicAccount = await prisma.userMusicAccount.findUnique({
+      where: {
+        userId_platform: {
+          userId,
+          platform: 'spotify',
+        },
+      },
+    });
+
+    if (!musicAccount) {
+      throw new Error('Connect Spotify in your profile first.');
+    }
+
+    let accessToken = musicAccount.accessToken;
+    const attemptQueue = async (token: string) => {
+      await axios({
+        method: 'post',
+        url: `https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(trackUri)}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    };
+
+    try {
+      await attemptQueue(accessToken);
+      return;
+    } catch (error: any) {
+      if (error.response?.status !== 401 || !musicAccount.refreshToken) {
+        console.error('Spotify queue error:', error.response?.data || error);
+        if (error.response?.status === 404) {
+          throw new Error('No active Spotify device found. Please open Spotify first.');
+        }
+        throw new Error('Failed to add to Spotify queue.');
+      }
+
+      console.log('Spotify token expired during queue add, attempting refresh');
+      const newTokenData = await this.refreshSpotifyToken(musicAccount.refreshToken);
+
+      if (!newTokenData) {
+        throw new Error('Failed to refresh Spotify token. Please reconnect Spotify.');
+      }
+
+      accessToken = newTokenData.accessToken;
+
+      await prisma.userMusicAccount.update({
+        where: {
+          userId_platform: {
+            userId,
+            platform: 'spotify',
+          },
+        },
+        data: {
+          accessToken: newTokenData.accessToken,
+          refreshToken: newTokenData.refreshToken || musicAccount.refreshToken,
+          expiresAt: newTokenData.expiresAt,
+        },
+      });
+
+      await attemptQueue(accessToken);
+    }
+  }
+
   /**
    * Refresh a Spotify access token using refresh token
    */

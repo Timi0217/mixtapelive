@@ -1,6 +1,7 @@
 import express from 'express';
 import { prisma } from '../config/database';
 import { FollowService } from '../services/followService';
+import { CacheService } from '../config/redis';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
@@ -172,6 +173,45 @@ router.post('/create-live-broadcasts', authenticateToken, requireAdmin, async (r
       'Feel the energy',
     ];
 
+    // Sample tracks with real album art
+    const sampleTracks = [
+      {
+        trackId: '3n3Ppam7vgaVa1iaRUc9Lp',
+        trackName: 'Mr. Brightside',
+        artistName: 'The Killers',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273ccdddd46119a4ff53eaf1f5d',
+        platform: 'spotify',
+      },
+      {
+        trackId: '0VjIjW4GlUZAMYd2vXMi3b',
+        trackName: 'Blinding Lights',
+        artistName: 'The Weeknd',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36',
+        platform: 'spotify',
+      },
+      {
+        trackId: '2374M0fQpWi3dLnB54qaLX',
+        trackName: 'Animals',
+        artistName: 'Martin Garrix',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273b4a0d69b0ab6e3f1d7c5e9c4',
+        platform: 'spotify',
+      },
+      {
+        trackId: '5ChkMS8OtdzJeqyybCc9R5',
+        trackName: 'Levitating',
+        artistName: 'Dua Lipa',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273be841ba4bc24340152e3a79a',
+        platform: 'spotify',
+      },
+      {
+        trackId: '0DiWol3AO6WpXZgp0goxAV',
+        trackName: 'One Dance',
+        artistName: 'Drake',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273f46b9d202509a8f7384b90de',
+        platform: 'spotify',
+      },
+    ];
+
     const now = new Date();
     const broadcasts = [];
 
@@ -187,6 +227,13 @@ router.post('/create-live-broadcasts', authenticateToken, requireAdmin, async (r
         },
       });
       broadcasts.push(broadcast);
+
+      // Set a currently playing track for this broadcast
+      const track = sampleTracks[Math.floor(Math.random() * sampleTracks.length)];
+      await CacheService.setCurrentlyPlaying(follow.curatorUserId, {
+        ...track,
+        startedAt: Date.now(),
+      });
     }
 
     res.json({
@@ -289,6 +336,36 @@ router.post('/create-unfollowed-live-curators', authenticateToken, requireAdmin,
       });
 
       broadcasts.push(broadcast);
+
+      // Set a currently playing track
+      const sampleTracks = [
+        {
+          trackId: '3n3Ppam7vgaVa1iaRUc9Lp',
+          trackName: 'Mr. Brightside',
+          artistName: 'The Killers',
+          albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273ccdddd46119a4ff53eaf1f5d',
+          platform: 'spotify',
+        },
+        {
+          trackId: '0VjIjW4GlUZAMYd2vXMi3b',
+          trackName: 'Blinding Lights',
+          artistName: 'The Weeknd',
+          albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36',
+          platform: 'spotify',
+        },
+        {
+          trackId: '2374M0fQpWi3dLnB54qaLX',
+          trackName: 'Animals',
+          artistName: 'Martin Garrix',
+          albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273b4a0d69b0ab6e3f1d7c5e9c4',
+          platform: 'spotify',
+        },
+      ];
+      const track = sampleTracks[Math.floor(Math.random() * sampleTracks.length)];
+      await CacheService.setCurrentlyPlaying(curator.id, {
+        ...track,
+        startedAt: Date.now(),
+      });
     }
 
     res.json({
@@ -310,6 +387,90 @@ router.post('/create-unfollowed-live-curators', authenticateToken, requireAdmin,
   } catch (error: any) {
     console.error('Error creating unfollowed curators:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Add album art to existing live broadcasts
+router.post('/add-album-art-to-live', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    // Get all current live broadcasts
+    const liveBroadcasts = await prisma.broadcast.findMany({
+      where: {
+        status: 'live',
+      },
+      select: {
+        id: true,
+        curatorId: true,
+      },
+    });
+
+    if (liveBroadcasts.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No live broadcasts found',
+        updated: 0,
+      });
+    }
+
+    // Sample tracks with real album art
+    const sampleTracks = [
+      {
+        trackId: '3n3Ppam7vgaVa1iaRUc9Lp',
+        trackName: 'Mr. Brightside',
+        artistName: 'The Killers',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273ccdddd46119a4ff53eaf1f5d',
+        platform: 'spotify',
+      },
+      {
+        trackId: '0VjIjW4GlUZAMYd2vXMi3b',
+        trackName: 'Blinding Lights',
+        artistName: 'The Weeknd',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36',
+        platform: 'spotify',
+      },
+      {
+        trackId: '2374M0fQpWi3dLnB54qaLX',
+        trackName: 'Animals',
+        artistName: 'Martin Garrix',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273b4a0d69b0ab6e3f1d7c5e9c4',
+        platform: 'spotify',
+      },
+      {
+        trackId: '5ChkMS8OtdzJeqyybCc9R5',
+        trackName: 'Levitating',
+        artistName: 'Dua Lipa',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273be841ba4bc24340152e3a79a',
+        platform: 'spotify',
+      },
+      {
+        trackId: '0DiWol3AO6WpXZgp0goxAV',
+        trackName: 'One Dance',
+        artistName: 'Drake',
+        albumArtUrl: 'https://i.scdn.co/image/ab67616d0000b273f46b9d202509a8f7384b90de',
+        platform: 'spotify',
+      },
+    ];
+
+    // Set a currently playing track for each broadcast
+    for (const broadcast of liveBroadcasts) {
+      const track = sampleTracks[Math.floor(Math.random() * sampleTracks.length)];
+      await CacheService.setCurrentlyPlaying(broadcast.curatorId, {
+        ...track,
+        startedAt: Date.now(),
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Added album art to ${liveBroadcasts.length} live broadcasts`,
+      updated: liveBroadcasts.length,
+    });
+  } catch (error: any) {
+    console.error('Error adding album art:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 });
 
