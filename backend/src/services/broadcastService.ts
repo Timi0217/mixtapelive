@@ -180,12 +180,22 @@ export class BroadcastService {
     const curatorIds = broadcasts.map(b => b.curatorId);
     const tracksMap = await CacheService.getBatchCurrentlyPlaying(curatorIds);
 
+    console.log(`🎵 Fetched tracks for ${curatorIds.length} curators, got ${tracksMap.size} tracks`);
+    if (tracksMap.size > 0) {
+      const firstTrack = Array.from(tracksMap.values())[0];
+      console.log(`🎵 Sample track:`, firstTrack);
+    }
+
     return broadcasts.map((broadcast) => {
       const { _count, ...rest } = broadcast;
+      const currentTrack = tracksMap.get(broadcast.curatorId) || null;
+      if (!currentTrack) {
+        console.log(`⚠️ No track found for curator ${broadcast.curatorId}`);
+      }
       return {
         ...rest,
         listenerCount: _count.listeners,
-        currentTrack: tracksMap.get(broadcast.curatorId) || null,
+        currentTrack,
       };
     });
   }

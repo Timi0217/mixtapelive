@@ -822,10 +822,12 @@ router.get('/reset-test-data-now', async (req, res) => {
 
       // Set currently playing track with album art (with extended TTL for demo)
       const key = `curator:${curator.id}:now-playing`;
-      await CacheService.set(key, JSON.stringify({
+      const trackData = {
         ...track,
         startedAt: Date.now(),
-      }), 3600); // 1 hour TTL for demo data
+      };
+      await CacheService.set(key, JSON.stringify(trackData), 3600); // 1 hour TTL for demo data
+      console.log(`✅ Set track for ${curator.username}:`, track.trackName, '| Album:', track.albumArtUrl?.substring(0, 50));
 
       broadcasts.push(broadcast);
     }
@@ -850,10 +852,12 @@ router.get('/reset-test-data-now', async (req, res) => {
 
       // Set currently playing track with album art (with extended TTL for demo)
       const key = `curator:${curator.id}:now-playing`;
-      await CacheService.set(key, JSON.stringify({
+      const trackData = {
         ...track,
         startedAt: Date.now(),
-      }), 3600); // 1 hour TTL for demo data
+      };
+      await CacheService.set(key, JSON.stringify(trackData), 3600); // 1 hour TTL for demo data
+      console.log(`✅ Set track for ${curator.username}:`, track.trackName, '| Album:', track.albumArtUrl?.substring(0, 50));
 
       broadcasts.push(broadcast);
     }
