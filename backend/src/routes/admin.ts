@@ -36,26 +36,26 @@ const EMOJIS = ['🎵', '🎧', '🎤', '🎸', '🎹', '🎺', '🎷', '🥁', 
 
 // Background colors - distinct and diverse
 const COLORS = [
-  '#EF4444', // Red
-  '#F59E0B', // Orange
-  '#FBBF24', // Yellow
-  '#84CC16', // Lime
-  '#10B981', // Green
-  '#14B8A6', // Teal
-  '#06B6D4', // Cyan
-  '#3B82F6', // Blue
-  '#8B5CF6', // Purple
-  '#EC4899', // Pink
-  '#F43F5E', // Rose
-  '#FB923C', // Amber
-  '#22C55E', // Emerald
-  '#0EA5E9', // Sky
-  '#6366F1', // Indigo
-  '#A855F7', // Violet
-  '#D946EF', // Fuchsia
-  '#FB7185', // Light Pink
-  '#34D399', // Light Green
-  '#60A5FA', // Light Blue
+  '#EF4444', // Red - DJ Nova
+  '#6366F1', // Indigo - Luna Beats (swapped with Groove Pilot for contrast)
+  '#FBBF24', // Yellow - Echo Sound
+  '#84CC16', // Lime - Rhythm King
+  '#10B981', // Green - Melody Star
+  '#14B8A6', // Teal - Bass Master
+  '#06B6D4', // Cyan - Wave Rider
+  '#3B82F6', // Blue - Sonic Bloom
+  '#8B5CF6', // Purple - Vibe Chief
+  '#EC4899', // Pink - Beat Sage
+  '#F43F5E', // Rose - Soul Spinner
+  '#FB923C', // Amber - Track Lord
+  '#22C55E', // Emerald - Mix Maven
+  '#0EA5E9', // Sky - Drop Zone
+  '#F59E0B', // Orange - Groove Pilot (swapped with Luna Beats for higher contrast)
+  '#A855F7', // Violet - Sound Wave
+  '#D946EF', // Fuchsia - Tempo Titan
+  '#FB7185', // Light Pink - Harmony Hub
+  '#34D399', // Light Green - Pulse Point
+  '#60A5FA', // Light Blue - Beat Breaker
 ];
 
 // Real curator names and usernames
