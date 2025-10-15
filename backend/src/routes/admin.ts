@@ -45,13 +45,16 @@ const EMOJIS = [
   '🫐', '🎨', '🌲', '🐮', '🏐', '🍏', '🦩', '🎼', '🎋', '🐷'
 ];
 
-// Background colors - cycling through vibrant colors (repeating pattern for 100 users)
-const COLORS = [
+// Background colors - distributed evenly to avoid clustering (100 colors)
+const BASE_COLORS = [
   '#EF4444', '#F59E0B', '#FBBF24', '#84CC16', '#10B981',
   '#14B8A6', '#06B6D4', '#3B82F6', '#6366F1', '#8B5CF6',
   '#A855F7', '#D946EF', '#EC4899', '#F43F5E', '#FB923C',
   '#FBBF24', '#22C55E', '#0EA5E9', '#60A5FA', '#FB7185',
-].flatMap(color => [color, color, color, color, color]); // Repeat 5 times to get 100 colors
+];
+
+// Create 100 colors by cycling through base colors to distribute evenly
+const COLORS = Array.from({ length: 100 }, (_, i) => BASE_COLORS[i % BASE_COLORS.length]);
 
 // Generate 100 curator names programmatically
 const generateCuratorNames = () => {
