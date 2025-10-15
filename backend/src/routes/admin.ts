@@ -31,8 +31,8 @@ const requireAdmin = async (req: AuthRequest, res: express.Response, next: expre
   }
 };
 
-// Profile emojis - diverse and random to show personality
-const EMOJIS = ['🌊', '🔥', '⭐', '🌙', '🌸', '🍕', '🎮', '🚀', '🦋', '🌈', '🍒', '🎨', '🏀', '🌵', '🦄', '👾', '🌻', '🍦', '⚡', '🐝', '🌮', '🎪', '🦖', '🍓', '🎯', '🐙', '🌺', '🎭', '🦩', '🍄'];
+// Profile emojis - diverse and fun to show personality
+const EMOJIS = ['🎮', '👾', '🌺', '🎭', '🍒', '🚀', '🦋', '🔥', '🌈', '⭐', '🍕', '🎨', '🏀', '🌵', '🦄', '🌻', '🍦', '⚡', '🐝', '🌮', '🎪', '🦖', '🍓', '🎯', '🐙', '🌙', '💎', '🌊', '🦩', '🍄'];
 
 // Background colors - distinct and diverse
 const COLORS = [
