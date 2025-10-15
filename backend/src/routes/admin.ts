@@ -31,56 +31,53 @@ const requireAdmin = async (req: AuthRequest, res: express.Response, next: expre
   }
 };
 
-// Profile emojis - diverse and fun to show personality
-const EMOJIS = ['🍄', '🦩', '🌊', '💎', '🌙', '🐙', '🎯', '🍓', '🦖', '🎪', '🌮', '🐝', '⚡', '🍦', '🌻', '🦄', '🌵', '🏀', '🎨', '🍕', '⭐', '🌈', '🔥', '🦋', '🚀', '🍒', '🎭', '🌺', '👾', '🎮'];
+// Profile emojis - diverse and fun to show personality (100 unique emojis)
+const EMOJIS = [
+  '🍄', '🦩', '🌊', '💎', '🌙', '🐙', '🎯', '🍓', '🦖', '🎪',
+  '🌮', '🐝', '⚡', '🍦', '🌻', '🦄', '🌵', '🏀', '🎨', '🍕',
+  '⭐', '🌈', '🔥', '🦋', '🚀', '🍒', '🎭', '🌺', '👾', '🎮',
+  '🍩', '🎸', '🌴', '🦊', '🎲', '🍉', '🦅', '🎺', '🌸', '🐢',
+  '🍌', '🎻', '🌹', '🦁', '🎰', '🍇', '🐬', '🎪', '🌷', '🦒',
+  '🍑', '🥁', '🌼', '🐯', '🎳', '🥝', '🦜', '🎹', '🏵️', '🐘',
+  '🍊', '🎤', '💐', '🦓', '🎾', '🍋', '🐳', '🎧', '🌿', '🦌',
+  '🍍', '🎬', '🍀', '🐧', '⚽', '🥥', '🦚', '🎵', '🌱', '🐨',
+  '🥭', '🎪', '☘️', '🐼', '🏈', '🍈', '🦢', '🎶', '🌾', '🐻',
+  '🫐', '🎨', '🌲', '🐮', '🏐', '🍏', '🦩', '🎼', '🎋', '🐷'
+];
 
-// Background colors - distinct and diverse
+// Background colors - cycling through vibrant colors (repeating pattern for 100 users)
 const COLORS = [
-  '#EF4444', // Red - DJ Nova
-  '#6366F1', // Indigo - Luna Beats (swapped with Groove Pilot for contrast)
-  '#FBBF24', // Yellow - Echo Sound
-  '#84CC16', // Lime - Rhythm King
-  '#10B981', // Green - Melody Star
-  '#14B8A6', // Teal - Bass Master
-  '#06B6D4', // Cyan - Wave Rider
-  '#3B82F6', // Blue - Sonic Bloom
-  '#8B5CF6', // Purple - Vibe Chief
-  '#EC4899', // Pink - Beat Sage
-  '#F43F5E', // Rose - Soul Spinner
-  '#FB923C', // Amber - Track Lord
-  '#22C55E', // Emerald - Mix Maven
-  '#0EA5E9', // Sky - Drop Zone
-  '#F59E0B', // Orange - Groove Pilot (swapped with Luna Beats for higher contrast)
-  '#A855F7', // Violet - Sound Wave
-  '#D946EF', // Fuchsia - Tempo Titan
-  '#FB7185', // Light Pink - Harmony Hub
-  '#34D399', // Light Green - Pulse Point
-  '#60A5FA', // Light Blue - Beat Breaker
-];
+  '#EF4444', '#F59E0B', '#FBBF24', '#84CC16', '#10B981',
+  '#14B8A6', '#06B6D4', '#3B82F6', '#6366F1', '#8B5CF6',
+  '#A855F7', '#D946EF', '#EC4899', '#F43F5E', '#FB923C',
+  '#FBBF24', '#22C55E', '#0EA5E9', '#60A5FA', '#FB7185',
+].flatMap(color => [color, color, color, color, color]); // Repeat 5 times to get 100 colors
 
-// Real curator names and usernames
-const CURATOR_NAMES = [
-  { display: 'DJ Nova', username: 'djnova' },
-  { display: 'Luna Beats', username: 'lunabeats' },
-  { display: 'Echo Sound', username: 'echosound' },
-  { display: 'Rhythm King', username: 'rhythmking' },
-  { display: 'Melody Star', username: 'melodystar' },
-  { display: 'Bass Master', username: 'bassmaster' },
-  { display: 'Wave Rider', username: 'waverider' },
-  { display: 'Sonic Bloom', username: 'sonicbloom' },
-  { display: 'Vibe Chief', username: 'vibechief' },
-  { display: 'Beat Sage', username: 'beatsage' },
-  { display: 'Soul Spinner', username: 'soulspinner' },
-  { display: 'Track Lord', username: 'tracklord' },
-  { display: 'Mix Maven', username: 'mixmaven' },
-  { display: 'Drop Zone', username: 'dropzone' },
-  { display: 'Groove Pilot', username: 'groovepilot' },
-  { display: 'Sound Wave', username: 'soundwave' },
-  { display: 'Tempo Titan', username: 'tempotitan' },
-  { display: 'Harmony Hub', username: 'harmonyhub' },
-  { display: 'Pulse Point', username: 'pulsepoint' },
-  { display: 'Beat Breaker', username: 'beatbreaker' },
-];
+// Generate 100 curator names programmatically
+const generateCuratorNames = () => {
+  const prefixes = ['DJ', 'MC', 'Lil', 'Big', 'Young', 'Kid', 'Queen', 'King', 'Lady', 'Lord'];
+  const names = ['Nova', 'Luna', 'Echo', 'Rhythm', 'Melody', 'Bass', 'Wave', 'Sonic', 'Vibe', 'Beat', 'Soul', 'Track', 'Mix', 'Drop', 'Groove', 'Sound', 'Tempo', 'Harmony', 'Pulse', 'Verse'];
+  const suffixes = ['Beats', 'Sound', 'Star', 'Master', 'Rider', 'Bloom', 'Chief', 'Sage', 'Spinner', 'Lord', 'Maven', 'Zone', 'Pilot', 'Wave', 'Titan', 'Hub', 'Point', 'Breaker', 'Flow', 'Vibe'];
+
+  const curators = [];
+  let index = 0;
+
+  // Generate 100 unique combinations
+  for (const prefix of prefixes) {
+    for (const suffix of suffixes) {
+      if (index >= 100) break;
+      const display = `${prefix} ${suffix}`;
+      const username = `${prefix.toLowerCase()}${suffix.toLowerCase()}`;
+      curators.push({ display, username });
+      index++;
+    }
+    if (index >= 100) break;
+  }
+
+  return curators.slice(0, 100);
+};
+
+const CURATOR_NAMES = generateCuratorNames();
 
 function getRandomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
@@ -760,9 +757,9 @@ router.get('/reset-test-data-now', async (req, res) => {
     // Genre options
     const genres = ['Afrobeats', 'Amapiano', 'House', 'R&B', 'Hip Hop', 'Pop', 'Electronic', 'Indie', 'Rock', 'Jazz'];
 
-    // Create 20 curators with variety
+    // Create 100 curators for 10 rows in Discovery
     const curators = [];
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 100; i++) {
       const curatorInfo = CURATOR_NAMES[i - 1];
       const curator = await prisma.user.create({
         data: {
@@ -824,7 +821,7 @@ router.get('/reset-test-data-now', async (req, res) => {
 
     console.log('Created curator balances for trending');
 
-    // Create 12 live broadcasts (7 from followed, 5 from unfollowed) - leaves 3 followed offline
+    // Create broadcasts: 7 from followed + 25 random from unfollowed (32 total live out of 100)
     const broadcasts = [];
 
     // 7 broadcasts from followed curators (leaving 3 offline for variety)
@@ -864,9 +861,10 @@ router.get('/reset-test-data-now', async (req, res) => {
       broadcasts.push(broadcast);
     }
 
-    // 5 broadcasts from unfollowed curators
-    for (let i = 0; i < 5; i++) {
-      const curator = unfollowedCurators[i];
+    // 25 random broadcasts from unfollowed curators (mix of live/offline)
+    const shuffledUnfollowed = [...unfollowedCurators].sort(() => Math.random() - 0.5);
+    for (let i = 0; i < 25; i++) {
+      const curator = shuffledUnfollowed[i];
       const track = sampleTracks[i % sampleTracks.length];
 
       const broadcast = await prisma.broadcast.create({
