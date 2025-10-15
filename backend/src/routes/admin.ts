@@ -34,12 +34,28 @@ const requireAdmin = async (req: AuthRequest, res: express.Response, next: expre
 // Profile emojis for variety
 const EMOJIS = ['🎵', '🎧', '🎤', '🎸', '🎹', '🎺', '🎷', '🥁', '🎼', '🎶', '💿', '📻', '🔊', '🎚️', '🎛️', '🔥', '⚡', '✨', '💫', '⭐', '🌟', '💎', '👑', '🦁', '🐆', '🦅', '🌊', '🌴', '🏝️', '🌺'];
 
-// Background colors
+// Background colors - distinct and diverse
 const COLORS = [
-  '#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#EF4444',
-  '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7', '#D946EF',
-  '#F43F5E', '#FB923C', '#FBBF24', '#84CC16', '#22C55E',
-  '#14B8A6', '#06B6D4', '#0EA5E9', '#6366F1', '#8B5CF6'
+  '#EF4444', // Red
+  '#F59E0B', // Orange
+  '#FBBF24', // Yellow
+  '#84CC16', // Lime
+  '#10B981', // Green
+  '#14B8A6', // Teal
+  '#06B6D4', // Cyan
+  '#3B82F6', // Blue
+  '#8B5CF6', // Purple
+  '#EC4899', // Pink
+  '#F43F5E', // Rose
+  '#FB923C', // Amber
+  '#22C55E', // Emerald
+  '#0EA5E9', // Sky
+  '#6366F1', // Indigo
+  '#A855F7', // Violet
+  '#D946EF', // Fuchsia
+  '#FB7185', // Light Pink
+  '#34D399', // Light Green
+  '#60A5FA', // Light Blue
 ];
 
 function getRandomElement<T>(array: T[]): T {
@@ -728,8 +744,8 @@ router.get('/reset-test-data-now', async (req, res) => {
           phone: `+1555000${String(i).padStart(4, '0')}`,
           username: `curator${i}`,
           displayName: `Curator ${i}`,
-          profileEmoji: getRandomElement(EMOJIS),
-          profileBackgroundColor: getRandomElement(COLORS),
+          profileEmoji: EMOJIS[i - 1], // Assign in order for variety
+          profileBackgroundColor: COLORS[i - 1], // Assign in order for distinct colors
           bio: `Curator ${i} - Music lover`,
           genreTags: [getRandomElement(genres), getRandomElement(genres)],
           accountType: 'curator',
@@ -804,11 +820,12 @@ router.get('/reset-test-data-now', async (req, res) => {
       await CacheService.setActiveBroadcast(curator.id, broadcast.id);
       await CacheService.addLiveBroadcast(broadcast.id, curator.id);
 
-      // Set currently playing track with album art
-      await CacheService.setCurrentlyPlaying(curator.id, {
+      // Set currently playing track with album art (with extended TTL for demo)
+      const key = `curator:${curator.id}:now-playing`;
+      await CacheService.set(key, JSON.stringify({
         ...track,
         startedAt: Date.now(),
-      });
+      }), 3600); // 1 hour TTL for demo data
 
       broadcasts.push(broadcast);
     }
@@ -831,11 +848,12 @@ router.get('/reset-test-data-now', async (req, res) => {
       await CacheService.setActiveBroadcast(curator.id, broadcast.id);
       await CacheService.addLiveBroadcast(broadcast.id, curator.id);
 
-      // Set currently playing track with album art
-      await CacheService.setCurrentlyPlaying(curator.id, {
+      // Set currently playing track with album art (with extended TTL for demo)
+      const key = `curator:${curator.id}:now-playing`;
+      await CacheService.set(key, JSON.stringify({
         ...track,
         startedAt: Date.now(),
-      });
+      }), 3600); // 1 hour TTL for demo data
 
       broadcasts.push(broadcast);
     }
