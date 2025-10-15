@@ -891,4 +891,34 @@ router.get('/test-ping', (req, res) => {
   res.json({ message: 'Admin routes are working!', timestamp: new Date().toISOString() });
 });
 
+// Test Redis album art storage
+router.get('/test-album-art', async (req, res) => {
+  try {
+    // Get first few broadcasts
+    const broadcasts = await prisma.broadcast.findMany({
+      where: { status: 'live' },
+      take: 3,
+    });
+
+    const results = [];
+    for (const broadcast of broadcasts) {
+      const key = `curator:${broadcast.curatorId}:now-playing`;
+      const cachedData = await CacheService.get(key);
+      const parsed = cachedData ? JSON.parse(cachedData) : null;
+
+      results.push({
+        curatorId: broadcast.curatorId,
+        broadcastId: broadcast.id,
+        cacheKey: key,
+        hasCachedData: !!cachedData,
+        track: parsed,
+      });
+    }
+
+    res.json({ results });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
