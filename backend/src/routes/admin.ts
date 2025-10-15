@@ -645,6 +645,8 @@ router.post('/reset-test-data', authenticateToken, requireAdmin, async (req: Aut
 // Temporary endpoint - accessible via secret key (remove after use!)
 router.get('/reset-test-data-now', async (req, res) => {
   try {
+    console.log('🔥 Reset endpoint called with secret:', req.query.secret);
+
     // Simple secret key check
     const secret = req.query.secret;
     if (secret !== 'mixtape2025') {
@@ -856,6 +858,11 @@ router.get('/reset-test-data-now', async (req, res) => {
       error: error.message,
     });
   }
+});
+
+// Simple test endpoint
+router.get('/test-ping', (req, res) => {
+  res.json({ message: 'Admin routes are working!', timestamp: new Date().toISOString() });
 });
 
 export default router;
