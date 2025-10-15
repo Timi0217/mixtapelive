@@ -821,57 +821,22 @@ router.get('/reset-test-data-now', async (req, res) => {
 
     console.log('Created curator balances for trending');
 
-    // Create broadcasts: 7 from followed + 25 random from unfollowed (32 total live out of 100)
+    // Create broadcasts scattered throughout all curators (32 random live out of 100)
     const broadcasts = [];
 
-    // 7 broadcasts from followed curators (leaving 3 offline for variety)
-    for (let i = 0; i < 7; i++) {
-      const curator = followedCurators[i];
-      const track = sampleTracks[i % sampleTracks.length];
+    // Shuffle ALL curators and pick 32 random ones to be live
+    const allCurators = [...followedCurators, ...unfollowedCurators];
+    const shuffledAll = [...allCurators].sort(() => Math.random() - 0.5);
+    const liveCurators = shuffledAll.slice(0, 32); // 32 random curators will be live
+
+    for (const curator of liveCurators) {
+      const track = sampleTracks[broadcasts.length % sampleTracks.length];
 
       const broadcast = await prisma.broadcast.create({
         data: {
           curatorId: curator.id,
           status: 'live',
           caption: `${curator.displayName}'s vibes`,
-          lastHeartbeatAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Set to 24 hours in future to prevent auto-cleanup
-        },
-      });
-
-      // Cache the broadcast
-      await CacheService.setActiveBroadcast(curator.id, broadcast.id);
-      await CacheService.addLiveBroadcast(broadcast.id, curator.id);
-
-      // Set currently playing track with album art (with extended TTL for demo)
-      try {
-        const key = `curator:${curator.id}:now-playing`;
-        const trackData = {
-          ...track,
-          startedAt: Date.now(),
-        };
-        await CacheService.set(key, JSON.stringify(trackData), 3600); // 1 hour TTL for demo data
-
-        // Verify it was saved
-        const verify = await CacheService.get(key);
-        console.log(`✅ ${curator.username}: ${track.trackName} | Saved: ${!!verify}`);
-      } catch (err) {
-        console.error(`❌ Failed ${curator.username}:`, err);
-      }
-
-      broadcasts.push(broadcast);
-    }
-
-    // 25 random broadcasts from unfollowed curators (mix of live/offline)
-    const shuffledUnfollowed = [...unfollowedCurators].sort(() => Math.random() - 0.5);
-    for (let i = 0; i < 25; i++) {
-      const curator = shuffledUnfollowed[i];
-      const track = sampleTracks[i % sampleTracks.length];
-
-      const broadcast = await prisma.broadcast.create({
-        data: {
-          curatorId: curator.id,
-          status: 'live',
-          caption: `${curator.displayName}'s session`,
           lastHeartbeatAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Set to 24 hours in future to prevent auto-cleanup
         },
       });
