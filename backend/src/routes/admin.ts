@@ -682,6 +682,59 @@ router.post('/reset-test-data', authenticateToken, requireAdmin, async (req: Aut
   }
 });
 
+// Clean up all test data (no reseed) - accessible via secret key
+router.get('/cleanup-test-data', async (req, res) => {
+  try {
+    console.log('🗑️ Cleanup endpoint called with secret:', req.query.secret);
+
+    // Simple secret key check
+    const secret = req.query.secret;
+    if (secret !== 'mixtape2025') {
+      return res.status(403).json({ error: 'Invalid secret' });
+    }
+
+    console.log('🧹 Cleaning up all test data...');
+
+    // Delete all broadcasts
+    const deletedBroadcasts = await prisma.broadcast.deleteMany({});
+    console.log(`Deleted ${deletedBroadcasts.count} broadcasts`);
+
+    // Delete all test users (phone starts with +1555)
+    const deletedUsers = await prisma.user.deleteMany({
+      where: {
+        phone: {
+          startsWith: '+1555',
+        },
+      },
+    });
+    console.log(`Deleted ${deletedUsers.count} test users`);
+
+    // Clear Redis cache - delete all live broadcasts
+    const liveBroadcasts = await CacheService.getLiveBroadcasts();
+    for (const broadcastId of liveBroadcasts) {
+      await CacheService.removeLiveBroadcast(broadcastId);
+    }
+    console.log('Cleared Redis cache');
+
+    console.log('✅ All test data cleaned up!');
+
+    res.json({
+      success: true,
+      message: 'All test data has been cleaned up',
+      data: {
+        deletedBroadcasts: deletedBroadcasts.count,
+        deletedUsers: deletedUsers.count,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error cleaning up test data:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 // Temporary endpoint - accessible via secret key (remove after use!)
 router.get('/reset-test-data-now', async (req, res) => {
   try {
