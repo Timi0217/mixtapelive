@@ -318,12 +318,9 @@ const PhoneLoginScreen = ({ onBack, navigation }) => {
               <>
                 {/* Verification Step */}
                 <View style={styles.heroSection}>
-                  <Text style={styles.title}>Check Your Messages</Text>
+                  <Text style={styles.title}>Verification Code</Text>
                   <Text style={styles.subtitle}>
-                    We sent a 6-digit code via SMS to {phoneNumber}
-                  </Text>
-                  <Text style={[styles.subtitle, { marginTop: 8, fontSize: 13, opacity: 0.7 }]}>
-                    The code may take up to 2 minutes to arrive
+                    We sent a 6-digit code to {phoneNumber}
                   </Text>
                 </View>
 
