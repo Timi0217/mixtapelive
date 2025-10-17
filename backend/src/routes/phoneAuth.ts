@@ -311,13 +311,22 @@ router.post('/complete-signup', async (req, res) => {
       });
     }
 
-    // Verify code again from Redis
+    // Verify code was validated previously (in /verify-code)
     const storedCode = await getVerificationCode(phoneNumber);
 
-    if (!storedCode || storedCode !== code) {
+    if (!storedCode) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid or expired verification code'
+        error: 'Verification code expired. Please request a new code.'
+      });
+    }
+
+    // If using Twilio Verify (storedCode === 'TWILIO_VERIFY'), the code was already verified
+    // If using manual code, verify it matches
+    if (storedCode !== 'TWILIO_VERIFY' && storedCode !== code) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid verification code'
       });
     }
 
