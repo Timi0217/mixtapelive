@@ -43,16 +43,22 @@ const MusicConnectionScreen = ({ navigation }) => {
     try {
       setConnecting('spotify');
 
+      console.log('🎵 Initiating Spotify connection...');
       const response = await api.get('/oauth/spotify/login');
+      console.log('🎵 Spotify login response:', response.data);
+
       const { authUrl, tokenId } = response.data;
 
       if (!authUrl || !tokenId) {
         throw new Error('Missing Spotify authorization details');
       }
 
+      console.log('🎵 Starting OAuth polling with tokenId:', tokenId);
+
       oauthPolling.startPolling(
         tokenId,
         async (newToken) => {
+          console.log('✅ Spotify OAuth success callback triggered');
           oauthPolling.stopPolling();
           try {
             WebBrowser.dismissBrowser();
@@ -60,28 +66,34 @@ const MusicConnectionScreen = ({ navigation }) => {
             // Browser already dismissed
           }
 
+          console.log('🔄 Reloading music accounts...');
           await loadMusicAccounts();
           setConnecting(null);
           Alert.alert('Spotify Connected', 'Your Spotify account is now linked.');
         },
         (message) => {
+          console.error('❌ Spotify OAuth error callback:', message);
           oauthPolling.stopPolling();
           setConnecting(null);
           Alert.alert('Spotify Connection Failed', message || 'Please try again.');
         }
       );
 
+      console.log('🌐 Opening Spotify auth browser...');
       const result = await WebBrowser.openBrowserAsync(authUrl, {
         dismissButtonStyle: 'close',
         presentationStyle: 'pageSheet',
       });
 
+      console.log('🌐 Browser result:', result);
+
       if (result.type === 'cancel') {
+        console.log('⚠️ User cancelled Spotify OAuth');
         oauthPolling.stopPolling();
         setConnecting(null);
       }
     } catch (error) {
-      console.error('Error connecting Spotify:', error);
+      console.error('❌ Error connecting Spotify:', error);
       Alert.alert('Error', 'Failed to connect Spotify. Please try again.');
       setConnecting(null);
     }
