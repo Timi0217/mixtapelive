@@ -94,13 +94,14 @@ const styles = StyleSheet.create({
 
   // Logo - Bold, minimal like pitch deck
   logo: {
-    fontSize: 64,
+    fontSize: Math.min(64, width * 0.16), // Scale down on smaller screens
     fontWeight: '900',
     color: '#1C1C1E',
-    letterSpacing: 4,
+    letterSpacing: Math.min(4, width * 0.01), // Scale letter spacing
     textAlign: 'center',
     marginBottom: 16,
     marginTop: 30,
+    width: '100%', // Ensure it doesn't overflow
   },
 
   // Tagline - Bold and uppercase

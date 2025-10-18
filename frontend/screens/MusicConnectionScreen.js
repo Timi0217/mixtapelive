@@ -9,10 +9,12 @@ import {
   StatusBar,
   ActivityIndicator,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import oauthPolling from '../services/oauthPolling';
 
 const MusicConnectionScreen = ({ navigation }) => {
   const { theme, isDark } = useTheme();
@@ -40,22 +42,47 @@ const MusicConnectionScreen = ({ navigation }) => {
   const handleConnectSpotify = async () => {
     try {
       setConnecting('spotify');
-      // Get Spotify OAuth URL from backend
-      const response = await api.get('/oauth/spotify-auth-url');
 
-      if (response.data.authUrl) {
-        // Open OAuth flow in WebView or external browser
-        // For now, we'll just show the URL
-        Alert.alert(
-          'Connect Spotify',
-          'Spotify OAuth integration coming soon!',
-          [{ text: 'OK' }]
-        );
+      const response = await api.get('/oauth/spotify/login');
+      const { authUrl, tokenId } = response.data;
+
+      if (!authUrl || !tokenId) {
+        throw new Error('Missing Spotify authorization details');
+      }
+
+      oauthPolling.startPolling(
+        tokenId,
+        async (newToken) => {
+          oauthPolling.stopPolling();
+          try {
+            WebBrowser.dismissBrowser();
+          } catch (_) {
+            // Browser already dismissed
+          }
+
+          await loadMusicAccounts();
+          setConnecting(null);
+          Alert.alert('Spotify Connected', 'Your Spotify account is now linked.');
+        },
+        (message) => {
+          oauthPolling.stopPolling();
+          setConnecting(null);
+          Alert.alert('Spotify Connection Failed', message || 'Please try again.');
+        }
+      );
+
+      const result = await WebBrowser.openBrowserAsync(authUrl, {
+        dismissButtonStyle: 'close',
+        presentationStyle: 'pageSheet',
+      });
+
+      if (result.type === 'cancel') {
+        oauthPolling.stopPolling();
+        setConnecting(null);
       }
     } catch (error) {
       console.error('Error connecting Spotify:', error);
       Alert.alert('Error', 'Failed to connect Spotify. Please try again.');
-    } finally {
       setConnecting(null);
     }
   };
