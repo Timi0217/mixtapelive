@@ -54,7 +54,8 @@ router.get('/spotify/login', async (req, res) => {
         'user-library-read',
         'user-library-modify',
         'user-read-playback-state',
-        'user-read-currently-playing'
+        'user-read-currently-playing',
+        'user-modify-playback-state'
       ].join(' '),
       redirect_uri: config.spotify.redirectUri,
       state: state,
