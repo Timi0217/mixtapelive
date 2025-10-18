@@ -534,7 +534,22 @@ const BroadcastScreen = ({ route, navigation }) => {
       }
     } catch (error) {
       console.error('Error adding to queue:', error.response?.data || error.message || error);
-      // Silently fail - don't interrupt the listening experience
+
+      // Check if error is due to Spotify Premium requirement
+      const errorMessage = error.response?.data?.error || error.message || '';
+      if (errorMessage.toLowerCase().includes('premium') ||
+          errorMessage.toLowerCase().includes('playback') ||
+          error.response?.status === 403) {
+        // Show one-time toast for Spotify Free users
+        Alert.alert(
+          'Spotify Premium Required',
+          'Auto-queue requires Spotify Premium. Tap the play button to manually play the next song.',
+          [{ text: 'Got it' }]
+        );
+        // Stop trying to auto-queue for this session
+        setIsPlaying(false);
+      }
+      // Otherwise silently fail - don't interrupt the listening experience
     }
   };
 
