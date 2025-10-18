@@ -137,9 +137,14 @@ router.get('/spotify/callback', async (req, res) => {
         'Authorization': `Bearer ${tokenData.access_token}`
       }
     });
-    
+
     if (!userResponse.ok) {
-      console.error('❌ Failed to get Spotify user profile');
+      const errorText = await userResponse.text();
+      console.error('❌ Failed to get Spotify user profile:', {
+        status: userResponse.status,
+        statusText: userResponse.statusText,
+        error: errorText
+      });
       return res.redirect(`${config.frontendUrl}auth/error?error=user_profile_failed`);
     }
     
