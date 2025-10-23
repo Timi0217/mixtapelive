@@ -87,10 +87,10 @@ const MusicConnectionScreen = ({ navigation }) => {
 
       console.log('🌐 Browser result:', result);
 
-      if (result.type === 'cancel') {
-        console.log('⚠️ User cancelled Spotify OAuth');
-        oauthPolling.stopPolling();
-        setConnecting(null);
+      if (result.type === 'cancel' || result.type === 'dismiss') {
+        console.log('⚠️ User closed browser, but polling continues...');
+        // Don't stop polling yet - let it complete in background
+        // The success/error callbacks will handle cleanup
       }
     } catch (error) {
       console.error('❌ Error connecting Spotify:', error);
@@ -102,16 +102,59 @@ const MusicConnectionScreen = ({ navigation }) => {
   const handleConnectAppleMusic = async () => {
     try {
       setConnecting('apple');
-      // Trigger Apple Music authorization
-      Alert.alert(
-        'Connect Apple Music',
-        'Apple Music integration coming soon!',
-        [{ text: 'OK' }]
+
+      console.log('🎵 Initiating Apple Music connection...');
+      const response = await api.get('/oauth/apple-music/login');
+      console.log('🎵 Apple Music login response:', response.data);
+
+      const { authUrl, tokenId } = response.data;
+
+      if (!authUrl || !tokenId) {
+        throw new Error('Missing Apple Music authorization details');
+      }
+
+      console.log('🎵 Starting OAuth polling with tokenId:', tokenId);
+
+      oauthPolling.startPolling(
+        tokenId,
+        async (newToken) => {
+          console.log('✅ Apple Music OAuth success callback triggered');
+          oauthPolling.stopPolling();
+          try {
+            WebBrowser.dismissBrowser();
+          } catch (_) {
+            // Browser already dismissed
+          }
+
+          console.log('🔄 Reloading music accounts...');
+          await loadMusicAccounts();
+          setConnecting(null);
+          Alert.alert('Apple Music Connected', 'Your Apple Music account is now linked.');
+        },
+        (message) => {
+          console.error('❌ Apple Music OAuth error callback:', message);
+          oauthPolling.stopPolling();
+          setConnecting(null);
+          Alert.alert('Apple Music Connection Failed', message || 'Please try again.');
+        }
       );
+
+      console.log('🌐 Opening Apple Music auth browser...');
+      const result = await WebBrowser.openBrowserAsync(authUrl, {
+        dismissButtonStyle: 'close',
+        presentationStyle: 'pageSheet',
+      });
+
+      console.log('🌐 Browser result:', result);
+
+      if (result.type === 'cancel' || result.type === 'dismiss') {
+        console.log('⚠️ User closed browser, but polling continues...');
+        // Don't stop polling yet - let it complete in background
+        // The success/error callbacks will handle cleanup
+      }
     } catch (error) {
-      console.error('Error connecting Apple Music:', error);
+      console.error('❌ Error connecting Apple Music:', error);
       Alert.alert('Error', 'Failed to connect Apple Music. Please try again.');
-    } finally {
       setConnecting(null);
     }
   };
@@ -156,7 +199,7 @@ const MusicConnectionScreen = ({ navigation }) => {
     return (
       <TouchableOpacity
         style={[styles.serviceCard, { backgroundColor: theme.colors.cardBackground }]}
-        onPress={connected ? null : (platform === 'spotify' ? handleConnectSpotify : handleConnectAppleMusic)}
+        onPress={connected ? null : (platform === 'apple-music' ? handleConnectAppleMusic : handleConnectSpotify)}
         disabled={connected || isConnecting}
         activeOpacity={connected ? 1 : 0.7}
       >
@@ -232,7 +275,7 @@ const MusicConnectionScreen = ({ navigation }) => {
 
         {/* Music Services */}
         {renderMusicService('spotify', 'Spotify', '#1DB954')}
-        {renderMusicService('apple', 'Apple Music', '#FA243C')}
+        {renderMusicService('apple-music', 'Apple Music', '#FA243C')}
       </ScrollView>
     </View>
   );

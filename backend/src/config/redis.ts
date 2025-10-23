@@ -21,8 +21,13 @@ redis.on('connect', () => {
   console.log('Redis client connected');
 });
 
+let redisErrorCount = 0;
 redis.on('error', (err) => {
-  console.error('Redis client error:', err);
+  // Only log first error to avoid spam
+  if (redisErrorCount === 0) {
+    console.warn('⚠️ Redis unavailable (falling back to in-memory storage)');
+    redisErrorCount++;
+  }
 });
 
 redis.on('ready', () => {

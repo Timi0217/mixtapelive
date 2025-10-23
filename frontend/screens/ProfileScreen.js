@@ -212,9 +212,60 @@ const ProfileScreen = ({ navigation }) => {
         return;
       }
 
+      if (platform === 'apple-music') {
+        const response = await api.get('/oauth/apple-music/login');
+        const { authUrl, tokenId } = response.data;
+
+        if (!authUrl || !tokenId) {
+          throw new Error('Missing Apple Music authorization details');
+        }
+
+        oauthPolling.startPolling(
+          tokenId,
+          async (newToken) => {
+            oauthPolling.stopPolling();
+            try {
+              WebBrowser.dismissBrowser();
+            } catch (_) {
+              // Browser already dismissed
+            }
+
+            if (newToken) {
+              await updateAuthState(newToken);
+              socketService.connect(newToken);
+            }
+
+            await loadMusicAccounts();
+            if (refreshUser) {
+              await refreshUser();
+            }
+
+            setConnectingService(null);
+            Alert.alert('Apple Music Connected', 'Your Apple Music account is now linked.');
+          },
+          (message) => {
+            oauthPolling.stopPolling();
+            setConnectingService(null);
+            Alert.alert('Apple Music Linking Failed', message || 'Please try again.');
+          }
+        );
+
+        const result = await WebBrowser.openBrowserAsync(authUrl, {
+          dismissButtonStyle: 'close',
+          presentationStyle: 'pageSheet',
+        });
+
+        if (result.type === 'cancel') {
+          oauthPolling.stopPolling();
+          setConnectingService(null);
+        }
+
+        return;
+      }
+
       Alert.alert(
-        `Connect ${platform === 'spotify' ? 'Spotify' : 'Apple Music'}`,
-        `${platform === 'spotify' ? 'Spotify' : 'Apple Music'} integration coming soon!`,
+        'Connect Music',
+        'Unsupported music platform',
         [{ text: 'OK' }]
       );
       setConnectingService(null);
@@ -415,27 +466,27 @@ const ProfileScreen = ({ navigation }) => {
           {/* Apple Music */}
           <TouchableOpacity
             style={[styles.menuItem, { borderBottomWidth: 0 }]}
-            onPress={() => !isConnected('apple') && handleConnectMusic('apple')}
-            disabled={isConnected('apple') || connectingService === 'apple'}
+            onPress={() => !isConnected('apple-music') && handleConnectMusic('apple-music')}
+            disabled={isConnected('apple-music') || connectingService === 'apple-music'}
             activeOpacity={0.7}
           >
             <View style={[styles.musicCircle, { backgroundColor: '#FA243C', shadowColor: '#FA243C' }]} />
             <View style={styles.musicInfo}>
               <Text style={[styles.menuText, { color: theme.colors.textPrimary }]}>Apple Music</Text>
-              {isConnected('apple') ? (
+              {isConnected('apple-music') ? (
                 <Text style={[styles.musicStatus, { color: theme.colors.success }]}>Connected</Text>
               ) : (
                 <Text style={[styles.musicStatus, { color: theme.colors.textTertiary }]}>Tap to connect</Text>
               )}
             </View>
-            {isConnected('apple') ? (
+            {isConnected('apple-music') ? (
               <TouchableOpacity
                 style={[styles.disconnectBtn, { borderColor: theme.colors.error }]}
-                onPress={() => handleDisconnectMusic('apple')}
+                onPress={() => handleDisconnectMusic('apple-music')}
               >
                 <Text style={[styles.disconnectBtnText, { color: theme.colors.error }]}>Disconnect</Text>
               </TouchableOpacity>
-            ) : connectingService === 'apple' ? (
+            ) : connectingService === 'apple-music' ? (
               <ActivityIndicator color={theme.colors.accent} />
             ) : (
               <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />

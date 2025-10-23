@@ -3,7 +3,7 @@ import { prisma } from '../config/database';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
 import twilio from 'twilio';
-import { phoneCodeLimiter, phoneLoginLimiter } from '../index';
+import { phoneCodeLimiter, phoneLoginLimiter } from '../config/rateLimiters';
 import { CacheService } from '../config/redis';
 
 const router = express.Router();
