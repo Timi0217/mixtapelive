@@ -76,6 +76,12 @@
           "color": "#8B5CF6",
           "defaultChannel": "default"
         }
+      ],
+      [
+        "./plugins/withMusicKit.js",
+        {
+          "developerTeamId": "TXQUSHN8GJ"
+        }
       ]
     ],
     "extra": {

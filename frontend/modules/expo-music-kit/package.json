@@ -1,0 +1,10 @@
+{
+  "name": "expo-music-kit",
+  "version": "1.0.0",
+  "description": "Native Apple Music/MusicKit module for Expo",
+  "main": "index.ts",
+  "scripts": {},
+  "keywords": ["expo", "musickit", "apple-music", "ios"],
+  "author": "",
+  "license": "MIT"
+}

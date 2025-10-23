@@ -9,6 +9,7 @@ import {
   StatusBar,
   ActivityIndicator,
   Linking,
+  Platform,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import oauthPolling from '../services/oauthPolling';
+import ExpoMusicKit from '../modules/expo-music-kit';
 
 const MusicConnectionScreen = ({ navigation }) => {
   const { theme, isDark } = useTheme();
@@ -104,52 +106,63 @@ const MusicConnectionScreen = ({ navigation }) => {
     try {
       setConnecting('apple');
 
-      console.log('🎵 Initiating Apple Music connection...');
-      const response = await api.get('/oauth/apple-music/login');
-      console.log('🎵 Apple Music login response:', response.data);
-
-      const { authUrl, tokenId } = response.data;
-
-      if (!authUrl || !tokenId) {
-        throw new Error('Missing Apple Music authorization details');
+      if (Platform.OS !== 'ios') {
+        Alert.alert('Not Available', 'Apple Music is only available on iOS');
+        setConnecting(null);
+        return;
       }
 
-      console.log('🎵 Starting OAuth polling with tokenId:', tokenId);
+      console.log('🎵 Requesting native Apple Music authorization...');
 
-      oauthPolling.startPolling(
-        tokenId,
-        async (newToken) => {
-          console.log('✅ Apple Music OAuth success callback triggered');
-          oauthPolling.stopPolling();
+      // Request authorization using native MusicKit
+      const result = await ExpoMusicKit.requestAuthorization();
 
-          console.log('🔄 Reloading music accounts...');
+      console.log('🎵 Authorization result:', result);
+
+      if (result.success && result.musicUserToken) {
+        // Send the music user token to the backend
+        console.log('✅ Got music user token, sending to backend...');
+
+        try {
+          await api.post('/users/music-accounts', {
+            platform: 'apple-music',
+            accessToken: result.musicUserToken,
+            refreshToken: null,
+            expiresAt: new Date(Date.now() + (180 * 24 * 60 * 60 * 1000)).toISOString(), // 180 days
+          });
+
+          console.log('✅ Apple Music account linked successfully');
           await loadMusicAccounts();
           setConnecting(null);
-          Alert.alert('Apple Music Connected', 'Your Apple Music account is now linked.');
-        },
-        (message) => {
-          console.error('❌ Apple Music OAuth error callback:', message);
-          oauthPolling.stopPolling();
+          Alert.alert('Success', 'Your Apple Music account is now linked!');
+        } catch (error) {
+          console.error('❌ Error saving Apple Music account:', error);
           setConnecting(null);
-          Alert.alert('Apple Music Connection Failed', message || 'Please try again.');
+          Alert.alert('Error', 'Failed to link Apple Music account. Please try again.');
         }
-      );
-
-      // Important: Open in Safari browser (not WebView) for MusicKit to work
-      console.log('🌐 Opening Apple Music auth in Safari...');
-      await Linking.openURL(authUrl);
-
-      // Show instructions since we can't track when Safari opens/closes
-      Alert.alert(
-        'Continue in Safari',
-        'Complete the Apple Music authorization in Safari, then return to this app.',
-        [{ text: 'OK' }]
-      );
+      } else {
+        // User denied or authorization failed
+        setConnecting(null);
+        if (result.status === 'denied') {
+          Alert.alert(
+            'Permission Denied',
+            'Please enable Apple Music access in Settings > Mixtape',
+            [{ text: 'OK' }]
+          );
+        } else if (result.status === 'restricted') {
+          Alert.alert(
+            'Restricted',
+            'Apple Music access is restricted on this device.',
+            [{ text: 'OK' }]
+          );
+        } else {
+          Alert.alert('Connection Failed', 'Could not connect to Apple Music. Please try again.');
+        }
+      }
     } catch (error) {
       console.error('❌ Error connecting Apple Music:', error);
-      Alert.alert('Error', 'Failed to connect Apple Music. Please try again.');
       setConnecting(null);
-      oauthPolling.stopPolling();
+      Alert.alert('Error', 'Failed to connect Apple Music. Please try again.');
     }
   };
 
