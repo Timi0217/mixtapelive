@@ -227,12 +227,15 @@ async function main() {
   // Create live broadcasts - one per track (no duplicates)
   console.log(`🎙️  Creating ${spotifyTracks.length} live broadcasts (one per track)...\n`);
 
+  // Shuffle vibes to ensure unique captions
+  const shuffledVibes = [...vibes].sort(() => 0.5 - Math.random());
+
   const broadcasts = [];
   for (let i = 0; i < spotifyTracks.length; i++) {
     const curator = curators[i % curators.length];
     const track = spotifyTracks[i]; // Use each track exactly once
 
-    const vibe = vibes[Math.floor(Math.random() * vibes.length)];
+    const vibe = shuffledVibes[i % shuffledVibes.length]; // Use each vibe only once
 
     const broadcast = await prisma.broadcast.create({
       data: {
