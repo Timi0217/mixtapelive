@@ -8,6 +8,7 @@ import {
   Alert,
   StatusBar,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
@@ -120,11 +121,6 @@ const MusicConnectionScreen = ({ navigation }) => {
         async (newToken) => {
           console.log('✅ Apple Music OAuth success callback triggered');
           oauthPolling.stopPolling();
-          try {
-            WebBrowser.dismissBrowser();
-          } catch (_) {
-            // Browser already dismissed
-          }
 
           console.log('🔄 Reloading music accounts...');
           await loadMusicAccounts();
@@ -139,23 +135,21 @@ const MusicConnectionScreen = ({ navigation }) => {
         }
       );
 
-      console.log('🌐 Opening Apple Music auth browser...');
-      const result = await WebBrowser.openBrowserAsync(authUrl, {
-        dismissButtonStyle: 'close',
-        presentationStyle: 'pageSheet',
-      });
+      // Important: Open in Safari browser (not WebView) for MusicKit to work
+      console.log('🌐 Opening Apple Music auth in Safari...');
+      await Linking.openURL(authUrl);
 
-      console.log('🌐 Browser result:', result);
-
-      if (result.type === 'cancel' || result.type === 'dismiss') {
-        console.log('⚠️ User closed browser, but polling continues...');
-        // Don't stop polling yet - let it complete in background
-        // The success/error callbacks will handle cleanup
-      }
+      // Show instructions since we can't track when Safari opens/closes
+      Alert.alert(
+        'Continue in Safari',
+        'Complete the Apple Music authorization in Safari, then return to this app.',
+        [{ text: 'OK' }]
+      );
     } catch (error) {
       console.error('❌ Error connecting Apple Music:', error);
       Alert.alert('Error', 'Failed to connect Apple Music. Please try again.');
       setConnecting(null);
+      oauthPolling.stopPolling();
     }
   };
 
