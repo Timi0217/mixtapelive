@@ -615,7 +615,7 @@ router.get('/apple-music/login', async (req, res) => {
   }
 });
 
-// Apple Music authorization page (WebView)
+// Apple Music authorization page (FIXED FOR SAFARI - NATIVE iOS)
 router.get('/apple-music/authorize', async (req, res) => {
   try {
     const { sessionId } = req.query;
@@ -628,22 +628,26 @@ router.get('/apple-music/authorize', async (req, res) => {
     const { appleMusicService } = await import('../services/appleMusicService');
     const developerToken = await appleMusicService.getDeveloperToken();
 
+    // This page is designed to work in Safari (not WebView)
+    // It will auto-initialize MusicKit and return the token via callback
     const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Connect Apple Music - Mixtape</title>
-  <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Connect Apple Music</title>
+  <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js" crossorigin="anonymous"></script>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       background: linear-gradient(135deg, #FA243C 0%, #ff4d5f 100%);
       color: white;
       min-height: 100vh;
@@ -651,26 +655,33 @@ router.get('/apple-music/authorize', async (req, res) => {
       align-items: center;
       justify-content: center;
       text-align: center;
+      padding: 20px;
     }
 
     .container {
       max-width: 400px;
-      padding: 40px 20px;
+      width: 100%;
     }
 
     .logo {
       font-size: 4rem;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
     }
 
     h1 {
-      font-size: 2rem;
+      font-size: 1.8rem;
       font-weight: 700;
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
 
     .subtitle {
-      font-size: 1.1rem;
+      font-size: 1rem;
       margin-bottom: 2rem;
       opacity: 0.9;
     }
@@ -679,43 +690,48 @@ router.get('/apple-music/authorize', async (req, res) => {
       background: white;
       color: #FA243C;
       border: none;
-      padding: 16px 32px;
-      border-radius: 12px;
+      padding: 18px 36px;
+      border-radius: 14px;
       font-size: 1.1rem;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 300px;
+      touch-action: manipulation;
     }
 
-    .auth-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    .auth-btn:active {
+      transform: scale(0.95);
     }
 
     .auth-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
-      transform: none;
+      transform: none !important;
     }
 
     .status {
       margin-top: 2rem;
-      padding: 1rem;
+      padding: 1.25rem;
       background: rgba(255,255,255,0.15);
-      border-radius: 8px;
+      border-radius: 12px;
       backdrop-filter: blur(10px);
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
 
     .loader {
       display: inline-block;
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       border: 2px solid rgba(255,255,255,0.3);
       border-radius: 50%;
       border-top-color: white;
-      animation: spin 1s ease-in-out infinite;
+      animation: spin 0.8s ease-in-out infinite;
       margin-right: 0.5rem;
+      vertical-align: middle;
     }
 
     @keyframes spin {
@@ -723,11 +739,25 @@ router.get('/apple-music/authorize', async (req, res) => {
     }
 
     .error {
-      background: rgba(255,0,0,0.2);
+      background: rgba(255,255,255,0.2);
       color: white;
-      padding: 1rem;
-      border-radius: 8px;
+      padding: 1.25rem;
+      border-radius: 12px;
       margin-top: 1rem;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .debug {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-family: monospace;
+      text-align: left;
+      max-height: 200px;
+      overflow-y: auto;
     }
   </style>
 </head>
@@ -735,14 +765,15 @@ router.get('/apple-music/authorize', async (req, res) => {
   <div class="container">
     <div class="logo">🎵</div>
     <h1>Connect Apple Music</h1>
-    <p class="subtitle">Link your Apple Music account to Mixtape</p>
+    <p class="subtitle">Tap to authorize your account</p>
 
     <button id="authBtn" class="auth-btn">
-      Authorize Apple Music
+      Continue with Apple Music
     </button>
 
     <div id="status" class="status" style="display: none;"></div>
     <div id="error" class="error" style="display: none;"></div>
+    <div id="debug" class="debug" style="display: none;"></div>
   </div>
 
   <script>
@@ -751,83 +782,127 @@ router.get('/apple-music/authorize', async (req, res) => {
     const DEVELOPER_TOKEN = '${developerToken}';
 
     let music;
+    let debugLogs = [];
+
+    function log(message) {
+      console.log(message);
+      debugLogs.push(\`[\${new Date().toLocaleTimeString()}] \${message}\`);
+      const debugDiv = document.getElementById('debug');
+      if (debugDiv.style.display !== 'none') {
+        debugDiv.textContent = debugLogs.join('\\n');
+        debugDiv.scrollTop = debugDiv.scrollHeight;
+      }
+    }
+
+    function showDebug() {
+      const debugDiv = document.getElementById('debug');
+      debugDiv.style.display = 'block';
+      debugDiv.textContent = debugLogs.join('\\n');
+    }
 
     async function authorize() {
-      alert('Authorize function called!');
       const btn = document.getElementById('authBtn');
       const status = document.getElementById('status');
       const errorDiv = document.getElementById('error');
 
       btn.disabled = true;
       status.style.display = 'block';
-      status.innerHTML = '<div class="loader"></div> Initializing MusicKit...';
+      status.innerHTML = '<div class="loader"></div> Connecting to Apple Music...';
       errorDiv.style.display = 'none';
+
+      log('Authorization started');
+      log(\`Browser: \${navigator.userAgent.substring(0, 50)}...\`);
+      log(\`MusicKit available: \${typeof MusicKit !== 'undefined'}\`);
 
       try {
         // Check if MusicKit is available
         if (typeof MusicKit === 'undefined') {
-          throw new Error('MusicKit JS failed to load. Please try again or use Safari.');
+          log('ERROR: MusicKit not loaded');
+          throw new Error('MusicKit failed to load. Please open in Safari.');
         }
 
-        alert('MusicKit loaded, configuring...');
+        log('MusicKit loaded successfully');
+        log('Configuring MusicKit...');
 
-        // Initialize MusicKit
+        // Initialize MusicKit v3
         await MusicKit.configure({
           developerToken: DEVELOPER_TOKEN,
           app: {
             name: 'Mixtape',
-            build: '1.0.0'
+            build: '1.0.0',
+            icon: 'https://mixtapelive.app/icon.png'
           }
         });
 
+        log('MusicKit configured');
         music = MusicKit.getInstance();
+        log(\`MusicKit instance created, isAuthorized: \${music.isAuthorized}\`);
 
-        status.innerHTML = '<div class="loader"></div> Requesting authorization...';
+        status.innerHTML = '<div class="loader"></div> Opening Apple Music authorization...';
 
         // Request user authorization
-        const userToken = await music.authorize();
+        log('Calling music.authorize()...');
+        await music.authorize();
+        log(\`Authorization completed, isAuthorized: \${music.isAuthorized}\`);
 
         if (music.isAuthorized && music.musicUserToken) {
-          status.innerHTML = '<div class="loader"></div> Connecting your account...';
+          const token = music.musicUserToken;
+          log(\`Got music user token: \${token.substring(0, 20)}...\`);
+
+          status.innerHTML = '<div class="loader"></div> Saving your connection...';
 
           // Send user token to backend
-          const response = await fetch(\${API_BASE} + '/api/oauth/apple-music/callback', {
+          log('Sending token to backend...');
+          const response = await fetch(API_BASE + '/api/oauth/apple-music/callback', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               sessionId: SESSION_ID,
-              musicUserToken: music.musicUserToken,
+              musicUserToken: token,
             }),
           });
 
+          log(\`Backend response status: \${response.status}\`);
           const data = await response.json();
+          log(\`Backend response: \${JSON.stringify(data).substring(0, 100)}\`);
 
           if (data.success) {
-            status.innerHTML = '✅ Success! Returning to app...';
+            log('Success! Redirecting...');
+            status.innerHTML = '✅ Connected! Returning to app...';
 
-            // Redirect back to app
+            // Redirect back to app after short delay
             setTimeout(() => {
               window.location.href = '${config.frontendUrl}auth/success?platform=apple-music&token=' + SESSION_ID;
-            }, 1500);
+            }, 1000);
           } else {
-            throw new Error(data.error || 'Failed to connect Apple Music account');
+            throw new Error(data.error || 'Failed to save Apple Music connection');
           }
         } else {
+          log('ERROR: Not authorized after authorize() call');
           throw new Error('Authorization was not granted');
         }
       } catch (error) {
+        log(\`ERROR: \${error.message}\`);
         console.error('Apple Music auth error:', error);
+
         errorDiv.style.display = 'block';
-        errorDiv.textContent = 'Failed to connect: ' + error.message;
+        errorDiv.innerHTML = '<strong>Connection failed</strong><br>' + error.message;
+
+        if (error.message.includes('MusicKit')) {
+          errorDiv.innerHTML += '<br><br>💡 Tip: This must be opened in Safari browser for Apple Music to work.';
+        }
+
         status.style.display = 'none';
         btn.disabled = false;
+        showDebug();
       }
     }
 
     // Attach click handler to button
-    document.getElementById('authBtn').addEventListener('click', function() {
+    document.getElementById('authBtn').addEventListener('click', function(e) {
+      e.preventDefault();
       authorize();
     });
 
