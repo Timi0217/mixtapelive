@@ -753,6 +753,7 @@ router.get('/apple-music/authorize', async (req, res) => {
     let music;
 
     async function authorize() {
+      alert('Authorize function called!');
       const btn = document.getElementById('authBtn');
       const status = document.getElementById('status');
       const errorDiv = document.getElementById('error');
@@ -763,6 +764,13 @@ router.get('/apple-music/authorize', async (req, res) => {
       errorDiv.style.display = 'none';
 
       try {
+        // Check if MusicKit is available
+        if (typeof MusicKit === 'undefined') {
+          throw new Error('MusicKit JS failed to load. Please try again or use Safari.');
+        }
+
+        alert('MusicKit loaded, configuring...');
+
         // Initialize MusicKit
         await MusicKit.configure({
           developerToken: DEVELOPER_TOKEN,
