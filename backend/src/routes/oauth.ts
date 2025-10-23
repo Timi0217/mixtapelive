@@ -818,10 +818,10 @@ router.get('/apple-music/authorize', async (req, res) => {
       }
     }
 
-    // Auto-trigger auth on page load
-    window.addEventListener('load', () => {
-      setTimeout(authorize, 500);
-    });
+    // Log that page is ready
+    console.log('Apple Music auth page loaded');
+    console.log('Developer token:', DEVELOPER_TOKEN ? 'Present' : 'Missing');
+    console.log('Session ID:', SESSION_ID);
   </script>
 </body>
 </html>`;
