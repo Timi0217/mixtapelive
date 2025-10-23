@@ -17,7 +17,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import oauthPolling from '../services/oauthPolling';
-import ExpoMusicKit from '../modules/expo-music-kit';
+// import ExpoMusicKit from '../modules/expo-music-kit'; // Disabled until native build support
 
 const MusicConnectionScreen = ({ navigation }) => {
   const { theme, isDark } = useTheme();
@@ -282,7 +282,8 @@ const MusicConnectionScreen = ({ navigation }) => {
 
         {/* Music Services */}
         {renderMusicService('spotify', 'Spotify', '#1DB954')}
-        {renderMusicService('apple-music', 'Apple Music', '#FA243C')}
+        {/* Apple Music temporarily disabled - requires native module */}
+        {/* {renderMusicService('apple-music', 'Apple Music', '#FA243C')} */}
       </ScrollView>
     </View>
   );

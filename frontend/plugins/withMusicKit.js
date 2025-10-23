@@ -40,19 +40,15 @@ const withMusicKit = (config, options = {}) => {
   });
 
   // Add MusicKit entitlements
-  config = withEntitlementsPlist(config, (config) => {
-    // Media library access entitlement
-    config.modResults['com.apple.developer.media-library-access'] = true;
-
-    // MusicKit entitlement with Team ID
-    if (developerTeamId) {
-      config.modResults['com.apple.developer.musickit'] = [
-        `${developerTeamId}.${config.ios?.bundleIdentifier || 'com.mobilemixtape.app'}`
-      ];
-    }
-
-    return config;
-  });
+  // TEMPORARILY DISABLED: EAS Build doesn't support MusicKit entitlements
+  // Will re-enable when we can build with Xcode locally
+  // config = withEntitlementsPlist(config, (config) => {
+  //   config.modResults['com.apple.developer.media-library-access'] = true;
+  //   config.modResults['com.apple.developer.musickit'] = [
+  //     'media.com.timilehin.mixtape.musickit'
+  //   ];
+  //   return config;
+  // });
 
   return config;
 };
