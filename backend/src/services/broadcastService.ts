@@ -449,36 +449,8 @@ export class BroadcastService {
 
   // Auto-stop broadcasts that have been inactive for too long (15 minutes)
   static async cleanupInactiveBroadcasts(io: any): Promise<void> {
-    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-
-    const inactiveBroadcasts = await prisma.broadcast.findMany({
-      where: {
-        status: 'live',
-        lastHeartbeatAt: {
-          lt: fifteenMinutesAgo,
-        },
-        // Exclude seeded broadcasts (curator phone doesn't start with +1555 test pattern)
-        curator: {
-          phone: {
-            startsWith: '+1555', // Only cleanup test broadcasts with +1555 phone numbers
-          },
-        },
-      },
-      include: {
-        curator: true,
-      },
-    });
-
-    for (const broadcast of inactiveBroadcasts) {
-      console.log(`🛑 Auto-stopping inactive broadcast: ${broadcast.id}`);
-
-      // Notify all listeners and curator that broadcast is ending
-      io.to(`broadcast:${broadcast.id}`).emit('broadcastEnded', {
-        reason: 'inactivity',
-        message: 'Broadcast ended due to inactivity',
-      });
-
-      await this.stopBroadcast(broadcast.id, broadcast.curatorId);
-    }
+    // DISABLED: Don't cleanup any broadcasts - keep test and seeded data alive
+    console.log('⏭️  Broadcast cleanup is disabled');
+    return;
   }
 }
