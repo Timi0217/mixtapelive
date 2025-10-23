@@ -290,11 +290,16 @@ const BroadcastScreen = ({ route, navigation }) => {
         setHasMusicAccount(false);
       }
 
-      try {
-        const track = await broadcastService.getCurrentlyPlaying(curatorId);
-        setCurrentTrack(track);
-      } catch (err) {
-        console.log('No track currently playing');
+      // Use currentTrack from broadcast response if available, otherwise fetch separately
+      if (data.currentTrack) {
+        setCurrentTrack(data.currentTrack);
+      } else {
+        try {
+          const track = await broadcastService.getCurrentlyPlaying(curatorId);
+          setCurrentTrack(track);
+        } catch (err) {
+          console.log('No track currently playing');
+        }
       }
 
       setLoading(false);
