@@ -176,11 +176,11 @@ export class BroadcastService {
       take: limit,
     });
 
-    // Batch fetch currently playing tracks to avoid N+1 query problem
+    // Batch fetch currently playing tracks from Redis
     const curatorIds = broadcasts.map(b => b.curatorId);
     const tracksMap = await CacheService.getBatchCurrentlyPlaying(curatorIds);
 
-    console.log(`🎵 Fetched tracks for ${curatorIds.length} curators, got ${tracksMap.size} tracks`);
+    console.log(`🎵 Fetched tracks for ${curatorIds.length} curators, got ${tracksMap.size} tracks from Redis`);
     if (tracksMap.size > 0) {
       const firstTrack = Array.from(tracksMap.values())[0];
       console.log(`🎵 Sample track:`, firstTrack);
@@ -188,10 +188,27 @@ export class BroadcastService {
 
     return broadcasts.map((broadcast) => {
       const { _count, ...rest } = broadcast;
-      const currentTrack = tracksMap.get(broadcast.curatorId) || null;
+
+      // Try Redis cache first, fallback to database fields
+      let currentTrack = tracksMap.get(broadcast.curatorId) || null;
+
+      // If no track in cache but we have track data in the broadcast record, use that
+      if (!currentTrack && broadcast.currentTrackId && broadcast.currentTrackName) {
+        currentTrack = {
+          trackId: broadcast.currentTrackId,
+          trackName: broadcast.currentTrackName,
+          artistName: broadcast.currentTrackArtist || 'Unknown Artist',
+          albumArtUrl: broadcast.currentAlbumArt || undefined,
+          platform: 'spotify',
+          startedAt: broadcast.startedAt.getTime(),
+        };
+        console.log(`✅ Using database track data for broadcast ${broadcast.id}`);
+      }
+
       if (!currentTrack) {
         console.log(`⚠️ No track found for curator ${broadcast.curatorId}`);
       }
+
       return {
         ...rest,
         listenerCount: _count.listeners,

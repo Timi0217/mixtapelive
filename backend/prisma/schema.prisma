@@ -21,6 +21,7 @@ model User {
   instagramHandle        String?                   @map("instagram_handle")
   genreTags              String[]                  @default([]) @map("genre_tags")
   timezone               String                    @default("UTC")
+  isFeatured             Boolean                   @default(false) @map("is_featured")
   // Privacy settings
   privateProfile         Boolean                   @default(false) @map("private_profile")
   showActivityStatus     Boolean                   @default(true) @map("show_activity_status")
@@ -109,6 +110,10 @@ model Broadcast {
   totalMessages   Int                 @default(0) @map("total_messages")
   lastHeartbeatAt DateTime            @default(now()) @map("last_heartbeat_at")
   caption         String?             @db.VarChar(50)
+  currentTrackId  String?             @map("current_track_id")
+  currentTrackName String?            @map("current_track_name")
+  currentTrackArtist String?          @map("current_track_artist")
+  currentAlbumArt String?             @map("current_album_art")
   listeners       BroadcastListener[]
   curator         User                @relation(fields: [curatorId], references: [id], onDelete: Cascade)
   messages        Message[]

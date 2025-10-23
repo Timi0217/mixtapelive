@@ -20,6 +20,7 @@ import ProfilePhotoCustomizer from '../components/ProfilePhotoCustomizer';
 import api, { setAuthToken } from '../services/api';
 import socketService from '../services/socketService';
 import oauthPolling from '../services/oauthPolling';
+import musicKitService from '../services/musicKitService';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, logout, updateUser, refreshUser, updateAuthState } = useAuth();
@@ -213,27 +214,38 @@ const ProfileScreen = ({ navigation }) => {
       }
 
       if (platform === 'apple-music') {
+        // Get Apple Music config from backend
         const response = await api.get('/oauth/apple-music/login');
-        const { authUrl, tokenId } = response.data;
+        const { developerToken, sessionId } = response.data;
 
-        if (!authUrl || !tokenId) {
-          throw new Error('Missing Apple Music authorization details');
+        if (!developerToken || !sessionId) {
+          throw new Error('Missing Apple Music configuration');
         }
 
-        oauthPolling.startPolling(
-          tokenId,
-          async (newToken) => {
-            oauthPolling.stopPolling();
-            try {
-              WebBrowser.dismissBrowser();
-            } catch (_) {
-              // Browser already dismissed
-            }
+        // Build Apple's official authorization URL
+        const authUrl = `https://authorize.music.apple.com/woa?app_name=${encodeURIComponent('Mixtape')}&app_id=${encodeURIComponent('com.mobilemixtape.app')}&developer_token=${encodeURIComponent(developerToken)}&redirect_uri=${encodeURIComponent('mixtape://apple-music-auth')}&state=${encodeURIComponent(sessionId)}`;
 
-            if (newToken) {
-              await updateAuthState(newToken);
-              socketService.connect(newToken);
-            }
+        // Open Apple's auth page
+        const result = await WebBrowser.openAuthSessionAsync(
+          authUrl,
+          'mixtape://apple-music-auth',
+          {
+            dismissButtonStyle: 'close',
+            presentationStyle: 'pageSheet'
+          }
+        );
+
+        if (result.type === 'success' && result.url) {
+          // Extract music user token from callback
+          const urlObj = new URL(result.url);
+          const musicUserToken = urlObj.searchParams.get('music_user_token');
+
+          if (musicUserToken) {
+            // Send to backend
+            await api.post('/oauth/apple-music/callback', {
+              sessionId,
+              musicUserToken
+            });
 
             await loadMusicAccounts();
             if (refreshUser) {
@@ -242,21 +254,8 @@ const ProfileScreen = ({ navigation }) => {
 
             setConnectingService(null);
             Alert.alert('Apple Music Connected', 'Your Apple Music account is now linked.');
-          },
-          (message) => {
-            oauthPolling.stopPolling();
-            setConnectingService(null);
-            Alert.alert('Apple Music Linking Failed', message || 'Please try again.');
           }
-        );
-
-        const result = await WebBrowser.openBrowserAsync(authUrl, {
-          dismissButtonStyle: 'close',
-          presentationStyle: 'pageSheet',
-        });
-
-        if (result.type === 'cancel') {
-          oauthPolling.stopPolling();
+        } else {
           setConnectingService(null);
         }
 

@@ -360,6 +360,33 @@ router.post('/complete-signup', async (req, res) => {
       }
     });
 
+    // Auto-follow featured curators for new users
+    const isNewUser = !await prisma.follow.findFirst({
+      where: { followerUserId: user.id }
+    });
+
+    if (isNewUser) {
+      const featuredCurators = await prisma.user.findMany({
+        where: {
+          isFeatured: true,
+          accountType: 'curator'
+        },
+        take: 5,
+        select: { id: true }
+      });
+
+      if (featuredCurators.length > 0) {
+        await prisma.follow.createMany({
+          data: featuredCurators.map(curator => ({
+            followerUserId: user.id,
+            curatorUserId: curator.id
+          })),
+          skipDuplicates: true
+        });
+        console.log(`✅ Auto-followed ${featuredCurators.length} featured curators for new user ${username}`);
+      }
+    }
+
     // Generate JWT
     const token = jwt.sign(
       {
