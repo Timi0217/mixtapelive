@@ -251,9 +251,26 @@ export class BroadcastService {
       return null;
     }
 
+    // Get current track from Redis cache
+    let currentTrack = await CacheService.getCurrentlyPlaying(broadcast.curatorId);
+
+    // Fallback to database fields if no track in cache
+    if (!currentTrack && broadcast.currentTrackId && broadcast.currentTrackName) {
+      currentTrack = {
+        trackId: broadcast.currentTrackId,
+        trackName: broadcast.currentTrackName,
+        artistName: broadcast.currentTrackArtist || 'Unknown Artist',
+        albumArtUrl: broadcast.currentAlbumArt || undefined,
+        platform: 'spotify',
+        startedAt: broadcast.startedAt.getTime(),
+      };
+      console.log(`✅ Using database track data for broadcast ${broadcast.id}`);
+    }
+
     return {
       ...broadcast,
       listenerCount: broadcast._count.listeners,
+      currentTrack,
     };
   }
 
