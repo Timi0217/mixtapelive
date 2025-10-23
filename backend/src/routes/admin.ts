@@ -519,9 +519,17 @@ router.post('/reset-test-data', authenticateToken, requireAdmin, async (req: Aut
   try {
     console.log('🧹 Cleaning up all test data...');
 
-    // Delete all test broadcasts (status = live or ended)
-    const deletedBroadcasts = await prisma.broadcast.deleteMany({});
-    console.log(`Deleted ${deletedBroadcasts.count} broadcasts`);
+    // Delete only test broadcasts (where curator phone starts with +1555)
+    const deletedBroadcasts = await prisma.broadcast.deleteMany({
+      where: {
+        curator: {
+          phone: {
+            startsWith: '+1555',
+          },
+        },
+      },
+    });
+    console.log(`Deleted ${deletedBroadcasts.count} test broadcasts`);
 
     // Delete all test users (phone starts with +1555)
     const deletedUsers = await prisma.user.deleteMany({
@@ -695,9 +703,17 @@ router.get('/cleanup-test-data', async (req, res) => {
 
     console.log('🧹 Cleaning up all test data...');
 
-    // Delete all broadcasts
-    const deletedBroadcasts = await prisma.broadcast.deleteMany({});
-    console.log(`Deleted ${deletedBroadcasts.count} broadcasts`);
+    // Delete only test broadcasts (where curator phone starts with +1555)
+    const deletedBroadcasts = await prisma.broadcast.deleteMany({
+      where: {
+        curator: {
+          phone: {
+            startsWith: '+1555',
+          },
+        },
+      },
+    });
+    console.log(`Deleted ${deletedBroadcasts.count} test broadcasts`);
 
     // Delete all test users (phone starts with +1555)
     const deletedUsers = await prisma.user.deleteMany({
@@ -748,9 +764,17 @@ router.get('/reset-test-data-now', async (req, res) => {
 
     console.log('🧹 Cleaning up all test data...');
 
-    // Delete all test broadcasts (status = live or ended)
-    const deletedBroadcasts = await prisma.broadcast.deleteMany({});
-    console.log(`Deleted ${deletedBroadcasts.count} broadcasts`);
+    // Delete only test broadcasts (where curator phone starts with +1555)
+    const deletedBroadcasts = await prisma.broadcast.deleteMany({
+      where: {
+        curator: {
+          phone: {
+            startsWith: '+1555',
+          },
+        },
+      },
+    });
+    console.log(`Deleted ${deletedBroadcasts.count} test broadcasts`);
 
     // Delete all test users (phone starts with +1555)
     const deletedUsers = await prisma.user.deleteMany({
