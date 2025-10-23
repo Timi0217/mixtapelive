@@ -737,7 +737,7 @@ router.get('/apple-music/authorize', async (req, res) => {
     <h1>Connect Apple Music</h1>
     <p class="subtitle">Link your Apple Music account to Mixtape</p>
 
-    <button id="authBtn" class="auth-btn" onclick="authorize()">
+    <button id="authBtn" class="auth-btn">
       Authorize Apple Music
     </button>
 
@@ -825,6 +825,11 @@ router.get('/apple-music/authorize', async (req, res) => {
         btn.disabled = false;
       }
     }
+
+    // Attach click handler to button
+    document.getElementById('authBtn').addEventListener('click', function() {
+      authorize();
+    });
 
     // Log that page is ready
     console.log('Apple Music auth page loaded');
