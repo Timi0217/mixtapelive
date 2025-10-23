@@ -51,29 +51,19 @@ const bios = [
   'tune enthusiast'
 ];
 
-// Popular Spotify tracks with their own cover art (not album art)
-// These URLs point directly to track images which are always available
+// Popular Spotify tracks with VERIFIED working album art URLs (tested 2025-10-23)
+// Only using tracks with confirmed 200 OK responses from Spotify CDN
 const spotifyTracks = [
-  { id: '3n3Ppam7vgaVa1iaRUc9Lp', name: 'Mr. Brightside', artist: 'The Killers', art: 'https://i.scdn.co/image/ab67616d00001e02ccdddd46119a4ff53eaf1f5d' },
-  { id: '0VjIjW4GlUZAMYd2vXMi3b', name: 'Blinding Lights', artist: 'The Weeknd', art: 'https://i.scdn.co/image/ab67616d00001e028863bc11d2aa12b54f5aeb36' },
-  { id: '7qiZfU4dY1lWllzX7mPBI7', name: 'Shape of You', artist: 'Ed Sheeran', art: 'https://i.scdn.co/image/ab67616d00001e02ba5db46f4b838ef6027e6f96' },
-  { id: '60nZcImufyMA1MKQY3dcCH', name: 'God\'s Plan', artist: 'Drake', art: 'https://i.scdn.co/image/ab67616d00001e02f907de96b9a4fbc04accc0d5' },
-  { id: '3KkXRkHbMCARz0aVfEt68P', name: 'Thunder', artist: 'Imagine Dragons', art: 'https://i.scdn.co/image/ab67616d00001e0233eaa41cd68c1e3a3fd58635' },
-  { id: '2takcwOaAZWiXQijPHIx7B', name: 'Time', artist: 'Pink Floyd', art: 'https://i.scdn.co/image/ab67616d00001e02ea7caaff71dea1051d49b2fe' },
-  { id: '7EX2vWN8FtD2kLLkW2pDUa', name: 'Levitating', artist: 'Dua Lipa', art: 'https://i.scdn.co/image/ab67616d00001e02ef9dd96678f6c4632cbd8cdb' },
-  { id: '0DiWol3AO6WpXZgp0goxAV', name: 'One Dance', artist: 'Drake', art: 'https://i.scdn.co/image/ab67616d00001e02f46b9d202509a8f7384b90de' },
-  { id: '1301WleyT98MSxVHPZCA6M', name: 'Bohemian Rhapsody', artist: 'Queen', art: 'https://i.scdn.co/image/ab67616d00001e021b2f16ee11ca1084f70b4281' },
-  { id: '2WfaOiMkCvy7F5fcp2zZ8L', name: 'bad guy', artist: 'Billie Eilish', art: 'https://i.scdn.co/image/ab67616d00001e0250a3147b4ebb7c2f5c7a6c8e' },
-  { id: '11dFghVXANMlKmJXsNCbNl', name: 'Cut To The Feeling', artist: 'Carly Rae Jepsen', art: 'https://i.scdn.co/image/ab67616d00001e0254d6e3f07c8f5f9f25da7eb4' },
-  { id: '0u2P5u6lvoDfwTYjAADbn4', name: 'lovely', artist: 'Billie Eilish', art: 'https://i.scdn.co/image/ab67616d00001e02c5e645624c3c2f62da5049cc' },
-  { id: '4cOdK2wGLETKBW3PvgPWqT', name: 'The Night We Met', artist: 'Lord Huron', art: 'https://i.scdn.co/image/ab67616d00001e02e4bc98cedc0e0c1e1f68da9a' },
-  { id: '5bnPTQgnxfU6YL3W2u0jxn', name: 'Sunflower', artist: 'Post Malone', art: 'https://i.scdn.co/image/ab67616d00001e0295f754318336a07e85ec59bc' },
-  { id: '3qiyyUfYe7CRYLucrPmulD', name: 'Heat Waves', artist: 'Glass Animals', art: 'https://i.scdn.co/image/ab67616d00001e0269e4c08e77bb37e2f0f2d2a7' },
-  { id: '6habFhsOp2NvshLv26DqMb', name: 'Someone You Loved', artist: 'Lewis Capaldi', art: 'https://i.scdn.co/image/ab67616d00001e024c8f092adc59b2e6f2738394' },
-  { id: '3ZCTVFBt2Brf31RLEnCkWJ', name: 'Starboy', artist: 'The Weeknd', art: 'https://i.scdn.co/image/ab67616d00001e024718e2b124f79258be7bc452' },
-  { id: '0pqnGHJpmpxLKifKRmU6WP', name: 'Anti-Hero', artist: 'Taylor Swift', art: 'https://i.scdn.co/image/ab67616d00001e02bb54dde68cd23e2a268ae0f5' },
-  { id: '1BxfuPKGuaTgP7aM0Bbdwr', name: 'Cruel Summer', artist: 'Taylor Swift', art: 'https://i.scdn.co/image/ab67616d00001e02e787cffec20aa2a396a61647' },
-  { id: '2dHHgzDwk4HSdYfdx7Xz8f', name: 'Flowers', artist: 'Miley Cyrus', art: 'https://i.scdn.co/image/ab67616d00001e02f58d5e5c3d4bf68ad8fc6477' },
+  { id: '3n3Ppam7vgaVa1iaRUc9Lp', name: 'Mr. Brightside', artist: 'The Killers', art: 'https://i.scdn.co/image/ab67616d0000b273ccdddd46119a4ff53eaf1f5d' },
+  { id: '0VjIjW4GlUZAMYd2vXMi3b', name: 'Blinding Lights', artist: 'The Weeknd', art: 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36' },
+  { id: '7qiZfU4dY1lWllzX7mPBI7', name: 'Shape of You', artist: 'Ed Sheeran', art: 'https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96' },
+  { id: '60nZcImufyMA1MKQY3dcCH', name: 'God\'s Plan', artist: 'Drake', art: 'https://i.scdn.co/image/ab67616d0000b273f907de96b9a4fbc04accc0d5' },
+  { id: '2takcwOaAZWiXQijPHIx7B', name: 'Time', artist: 'Pink Floyd', art: 'https://i.scdn.co/image/ab67616d0000b273ea7caaff71dea1051d49b2fe' },
+  { id: '0DiWol3AO6WpXZgp0goxAV', name: 'One Dance', artist: 'Drake', art: 'https://i.scdn.co/image/ab67616d0000b273f46b9d202509a8f7384b90de' },
+  { id: '5bnPTQgnxfU6YL3W2u0jxn', name: 'Sunflower', artist: 'Post Malone', art: 'https://i.scdn.co/image/ab67616d0000b27395f754318336a07e85ec59bc' },
+  { id: '3ZCTVFBt2Brf31RLEnCkWJ', name: 'Starboy', artist: 'The Weeknd', art: 'https://i.scdn.co/image/ab67616d0000b2734718e2b124f79258be7bc452' },
+  { id: '0pqnGHJpmpxLKifKRmU6WP', name: 'Anti-Hero', artist: 'Taylor Swift', art: 'https://i.scdn.co/image/ab67616d0000b273bb54dde68cd23e2a268ae0f5' },
+  { id: '1BxfuPKGuaTgP7aM0Bbdwr', name: 'Cruel Summer', artist: 'Taylor Swift', art: 'https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647' },
 ];
 
 const vibes = [
