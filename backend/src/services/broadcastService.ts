@@ -457,6 +457,15 @@ export class BroadcastService {
         lastHeartbeatAt: {
           lt: fifteenMinutesAgo,
         },
+        // Exclude seeded broadcasts (curator phone doesn't start with +1555 test pattern)
+        curator: {
+          phone: {
+            startsWith: '+1555', // Only cleanup test broadcasts with +1555 phone numbers
+          },
+        },
+      },
+      include: {
+        curator: true,
       },
     });
 
