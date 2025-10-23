@@ -224,14 +224,13 @@ async function main() {
   }
   console.log(`✅ Created ${followCount} follow relationships\n`);
 
-  // Create 30-40 live broadcasts with song data
-  const numBroadcasts = 30 + Math.floor(Math.random() * 10);
-  console.log(`🎙️  Creating ${numBroadcasts} live broadcasts...\n`);
+  // Create live broadcasts - one per track (no duplicates)
+  console.log(`🎙️  Creating ${spotifyTracks.length} live broadcasts (one per track)...\n`);
 
   const broadcasts = [];
-  for (let i = 0; i < numBroadcasts; i++) {
+  for (let i = 0; i < spotifyTracks.length; i++) {
     const curator = curators[i % curators.length];
-    const track = spotifyTracks[Math.floor(Math.random() * spotifyTracks.length)];
+    const track = spotifyTracks[i]; // Use each track exactly once
 
     const vibe = vibes[Math.floor(Math.random() * vibes.length)];
 
@@ -246,7 +245,7 @@ async function main() {
         currentTrackId: track.id,
         currentTrackName: track.name,
         currentTrackArtist: track.artist,
-        currentAlbumArt: track.art, // Track art, not album art
+        currentAlbumArt: track.art,
       },
     });
     broadcasts.push(broadcast);
